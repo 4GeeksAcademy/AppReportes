@@ -23,9 +23,15 @@ class User(db.Model):
         return {
                 "id": self.id, 
                 "username": self.username,
-                "email": self.email
+                "email": self.email,
+                "isActive":self.is_active
                 }
 
+# Agrego un modelo para guardar los tokens bloqueados por cierres de sesion
+class TokenBlockedList(db.Model):
+    __tablename__ = "tokenblockedlist"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    jti: Mapped[str] = mapped_column(String(50), nullable=False)
 
 class Reporte(db.Model):
     __tablename__ = "reportes"
