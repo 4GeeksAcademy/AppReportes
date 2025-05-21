@@ -6,23 +6,24 @@ export const publicFetch=async(endpoint, method = "GET", body=null)=>{
     let params={
         method,
         headers:{
-            "Access-Control_Allow_Origin":"*"
+            "Access-Control-Allow-Origin":"*"
         }
     }
     // Si hay un body se agrega al parámetro y se agrega la cabecera
     if(body){
         params.body=JSON.stringify(body)
-        params.headers["Content-Type"]="applitacion/json"     
+        params.headers["Content-Type"]="application/json"     
     }
     try {
         let response=await fetch(apiURL + endpoint,params)
         if(response.status>=500){
             console.error(response.status,response.statusText)
+            return null
         }
         if(response.status>=400){
             console.error(response.status,response.statusText)
-            let{msg}=await response.json()
-            return msg
+
+            //return await response.json()
         }
         return await response.json()
     } catch(error){
@@ -31,6 +32,32 @@ export const publicFetch=async(endpoint, method = "GET", body=null)=>{
     }
 }
 
-export const privateFetch=async()=>{
-
+export const privateFetch=async(endpoint, method = "GET", body=null)=>{
+    // Inicializar los parámetros de la petición con el método
+    let params={
+        method,
+        headers:{
+            "Access-Control-Allow-Origin":"*",
+            "Authorization":"Bearer"+localStorage.getItem("token")
+        }
+    }
+    // Si hay un body se agrega al parámetro y se agrega la cabecera
+    if(body){
+        params.body=JSON.stringify(body)
+        params.headers["Content-Type"]="application/json"     
+    }
+    try {
+        let response=await fetch(apiURL + endpoint,params)
+        if(response.status>=500){
+            console.error(response.status,response.statusText)
+            return null
+        }
+        if(response.status>=400){
+            console.error(response.status,response.statusText)
+        }
+        return await response.json()
+    } catch(error){
+        console.error(error)
+        return null
+    }
 }
