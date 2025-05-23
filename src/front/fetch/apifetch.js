@@ -38,7 +38,7 @@ export const privateFetch=async(endpoint, method = "GET", body=null)=>{
         method,
         headers:{
             "Access-Control-Allow-Origin":"*",
-            "Authorization":"Bearer"+localStorage.getItem("token")
+            "Authorization": "Bearer " + localStorage.getItem("token")
         }
     }
     // Si hay un body se agrega al parámetro y se agrega la cabecera

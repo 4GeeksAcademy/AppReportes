@@ -21,7 +21,7 @@ export const Home = () => {
 			</p>
 			<div className="alert alert-info">
 				{store.userInfo ? (
-					<span>{JSON.stringify(store.userInfo.user)}</span>
+					<span>{JSON.stringify(store.userInfo.user)}</span> // tengo que comprobar esto
 				) : (
 					<span className="text-danger">
 						Loading message from the backend (make sure your python 🐍 backend is running)...

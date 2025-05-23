@@ -39,15 +39,15 @@ export const Login = () => {
         <h1>Login</h1>
         <form onSubmit={formSubmit}>
   <div className="mb-3">
-    <label htmlFor="exampleInputEmail1" className="form-label">Email address</label>
+    <label htmlFor="email" className="form-label">Email address</label>
     <input value={email} onChange={(e)=>setEmail(e.target.value)} type="email" className="form-control" id="exampleInputEmail1" aria-describedby="emailHelp"/>
     <div id="emailHelp" className="form-text">We'll never share your email with anyone else.</div>
   </div>
   <div className="mb-3">
-    <label htmlFor="exampleInputPassword1" className="form-label">Password</label>
+    <label htmlFor="password" className="form-label">Password</label>
     <input value={password} onChange={(e)=>setPassword(e.target.value)} type="password" className="form-control" id="exampleInputPassword1"/>
   </div>
-  <button type="submit" className="btn btn-primary">Submit</button>
+  <button type="submit" className="btn btn-primary">Iniciar Sesión</button>
 </form>
     </div>
 

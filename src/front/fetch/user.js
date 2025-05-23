@@ -11,12 +11,29 @@ export const login=async(dispatch,email,password)=>{
     return response
 }
 
-export const logout=async()=>{
-
+export const logout=async(dispatch)=>{
+    // try {
+    //         await privateFetch("/logout", "POST");
+    //     } catch (err) {
+    //         console.warn("Error al cerrar sesión (posiblemente token inválido):", err.message);
+    //     }
+    //     localStorage.removeItem("token");
+    //     dispatch({ type: "CLEAR_SESSION" });
 }
 
-export const register=async()=>{
-
+export const register=async(dispatch, email, username, password)=>{
+    // try {
+    //     const response = await publicFetch("/register", "POST", { email, username, password });
+    //     if (!response || response.msg) {
+    //         console.error("Registro fallido:", response?.msg || "Respuesta inválida");
+    //         return response;
+    //     }
+    //     // Login automático tras registrar
+    //     return await login(dispatch, email, password);
+    // } catch (err) {
+    //     console.error("Register failed:", err.message);
+    //     return null;
+    // }
 }
 
 export const getinfo=async(dispatch)=>{
