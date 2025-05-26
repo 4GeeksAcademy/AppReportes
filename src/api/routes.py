@@ -9,11 +9,15 @@ from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt
 
 api = Blueprint('api', __name__)
+CORS(api, origins=["https://upgraded-rotary-phone-4j75jqj6p9jw3j6q4-3000.app.github.dev"])
 app = Flask(__name__)
 bcrypt = Bcrypt(app)
 
 # Allow CORS requests to this API
-CORS(api)
+# CORS(api)
+# CORS(app, resources={r"/api/*": {"origins": "https://upgraded-rotary-phone-4j75jqj6p9jw3j6q4-3000.app.github.dev"}})
+
+
 
 @api.route("/register", methods=["POST"])
 def register_user():

@@ -10,6 +10,10 @@ import { Home } from "./pages/Home";
 import { Single } from "./pages/Single";
 import { Demo } from "./pages/Demo";
 import { Login } from "./pages/Login";
+import { FirebaseLogin } from "./pages/FirebaseLogin";
+import { FirebaseSignup } from "./pages/FirebaseSignup"; // 👈 importa tu componente nuevo
+
+
 
 export const router = createBrowserRouter(
     createRoutesFromElements(
@@ -26,6 +30,8 @@ export const router = createBrowserRouter(
         <Route path= "/" element={<Home />} />
         <Route path="/single/:theId" element={ <Single />} />  {/* Dynamic route for single items */}
         <Route path="/demo" element={<Demo />} />
+        <Route path="/firebase-login" element={<FirebaseLogin />} />
+        <Route path="/signup" element={<FirebaseSignup />} />
         <Route path="/login" element={<Login />} />
       </Route>
     )

@@ -8,7 +8,7 @@ export const publicFetch=async(endpoint, method = "GET", body=null)=>{
         headers:{
             "Access-Control-Allow-Origin":"*"
         }
-    }
+    };
     // Si hay un body se agrega al parámetro y se agrega la cabecera
     if(body){
         params.body=JSON.stringify(body)
