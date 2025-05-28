@@ -1,22 +1,15 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { auth } from "../firebaseAuth"; // Asegúrate de que esta ruta sea correcta
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { useAuth } from "../context/AuthContext"; // 👈 Usamos el contexto
+import { signOut } from "firebase/auth";
+import { auth } from "../firebaseAuth";
 
 export const Navbar = () => {
-	const [user, setUser] = useState(null);
 	const navigate = useNavigate();
-
-	useEffect(() => {
-		const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-			setUser(firebaseUser);
-		});
-		return () => unsubscribe();
-	}, []);
+	const { user } = useAuth(); // 👈 Obtenemos el usuario del contexto
 
 	const handleLogout = async () => {
 		await signOut(auth);
-		navigate("/login");
+		navigate("/firebase-login");
 	};
 
 	return (
@@ -26,15 +19,21 @@ export const Navbar = () => {
 					<span className="navbar-brand mb-0 h1">React Boilerplate</span>
 				</Link>
 
-				<div className="ml-auto d-flex gap-2">
+				<div className="ml-auto d-flex align-items-center gap-2">
 					<Link to="/demo">
 						<button className="btn btn-primary">Check the Context in action</button>
 					</Link>
 
 					{user ? (
-						<button className="btn btn-danger" onClick={handleLogout}>
-							Cerrar sesión
-						</button>
+						<>
+							<span className="me-2">👋 {user.displayName || user.email}</span> {/* Nombre o email */}
+							<Link to="/profile">
+								<button className="btn btn-outline-secondary">Mi Perfil</button>
+							</Link>
+							<button className="btn btn-danger" onClick={handleLogout}>
+								Cerrar sesión
+							</button>
+						</>
 					) : (
 						<Link to="/firebase-login">
 							<button className="btn btn-outline-primary">Iniciar sesión</button>

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "../firebaseAuth"; // Tu configuración de Firebase
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+
 
 export const FirebaseLogin = () => {
   const [email, setEmail] = useState("");
@@ -60,12 +62,17 @@ export const FirebaseLogin = () => {
         </div>
         <button className="btn btn-primary mb-3" type="submit">Iniciar sesión</button>
       </form>
+      <p className="mt-3">
+        <Link to="/reset-password">¿Olvidaste tu contraseña?</Link>
+      </p>   
 
       <hr />
 
       <button className="btn btn-danger" onClick={handleGoogleLogin}>
         Iniciar sesión con Google
       </button>
+
+
     </div>
   );
 };
