@@ -39,7 +39,7 @@
 		"eslint-plugin-react-refresh": "^0.4.3",
 		"postcss": "^8.5.3",
 		"tailwindcss": "^4.1.6",
-		"vite": "^4.4.8"
+		"vite": "^6.3.5"
 	},
 	"babel": {
 		"presets": [
@@ -58,11 +58,13 @@
 	},
 	"dependencies": {
 		"bootstrap": "^5.3.6",
+		"firebase": "^11.8.1",
 		"lucide-react": "^0.510.0",
 		"prop-types": "^15.8.1",
 		"react": "^18.2.0",
 		"react-bootstrap": "^2.10.10",
 		"react-dom": "^18.2.0",
+		"react-firebase-hooks": "^5.1.1",
 		"react-router-dom": "^6.30.0"
 	}
 }

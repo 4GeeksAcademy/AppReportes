@@ -1,33 +1,96 @@
-
-// Import necessary components and functions from react-router-dom.
 import {
-    createBrowserRouter,
-    createRoutesFromElements,
-    Route,
+  createBrowserRouter,
+  createRoutesFromElements,
+  Route,
 } from "react-router-dom";
 import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
 import { Single } from "./pages/Single";
 import { Demo } from "./pages/Demo";
 import Feed from "./pages/Feed";
+import { FirebaseLogin } from "./pages/FirebaseLogin";
+import { FirebaseSignup } from "./pages/FirebaseSignup";
+import { PrivateRoute } from "./components/PrivateRoute";
+import { ResetPassword } from "./pages/ResetPassword";
+import { UserProfile } from "./pages/UserProfile";
+import { Perfil } from "./pages/Perfil";
+import { Moderador } from "./pages/Moderador";
 
 export const router = createBrowserRouter(
-    createRoutesFromElements(
-    // CreateRoutesFromElements function allows you to build route elements declaratively.
-    // Create your routes here, if you want to keep the Navbar and Footer in all views, add your new routes inside the containing Route.
-    // Root, on the contrary, create a sister Route, if you have doubts, try it!
-    // Note: keep in mind that errorElement will be the default page when you don't get a route, customize that page to make your project more attractive.
-    // Note: The child paths of the Layout element replace the Outlet component with the elements contained in the "element" attribute of these child paths.
+  createRoutesFromElements(
+    <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
+      
+   
+      <Route path="firebase-login" element={<FirebaseLogin />} />
+      <Route path="signup" element={<FirebaseSignup />} />
+      <Route path="reset-password" element={<ResetPassword />} />
 
-      // Root Route: All navigation will start from here.
-      <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
-        
-        {/* Nested Routes: Defines sub-routes within the Layout component. */}
-        <Route index element={<Feed />} />
-  {/* Root route for Home component */}
-        <Route path="feed" element={<Feed />} />
-        <Route path="single/:theId" element={<Single />} />  {/* Dynamic route for single items */}
-        <Route path="demo" element={<Demo />} />
-      </Route>
-    )
+   
+      <Route
+        index
+        element={
+          <PrivateRoute>
+            <Feed />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="feed"
+        element={
+          <PrivateRoute>
+            <Feed />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="single/:theId"
+        element={
+          <PrivateRoute>
+            <Single />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="demo"
+        element={
+          <PrivateRoute>
+            <Demo />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="profile"
+        element={
+          <PrivateRoute>
+            <UserProfile />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="home"
+        element={
+          <PrivateRoute>
+            <Home />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="perfil"
+        element={
+          <PrivateRoute>
+            <Perfil />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="moderador"
+        element={
+          <PrivateRoute>
+            <Moderador />
+          </PrivateRoute>
+        }
+      />
+    </Route>
+  )
 );
+
