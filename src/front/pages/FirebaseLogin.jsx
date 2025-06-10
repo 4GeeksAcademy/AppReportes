@@ -25,7 +25,7 @@ export const FirebaseLogin = () => {
       console.log("Respuesta authWithFirebase backend:", res);
 
       alert("✅ Login exitoso");
-      navigate("/");
+      navigate("/home");
     } catch (error) {
       console.error("Error al iniciar sesión:", error.message);
       alert("❌ Error: " + error.message);
@@ -44,7 +44,7 @@ export const FirebaseLogin = () => {
       console.log("Login con Google exitoso:", res);
 
       alert("✅ Login con Google exitoso");
-      navigate("/");
+      navigate("/home");
     } catch (error) {
       console.error("Error en Google login:", error.message);
       alert("❌ Error con Google: " + error.message);

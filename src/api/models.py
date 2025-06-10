@@ -1,9 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
-
 from sqlalchemy import String, Integer, Boolean, ForeignKey, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import List
-
 
 db = SQLAlchemy()
 

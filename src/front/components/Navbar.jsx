@@ -19,13 +19,13 @@ export const Navbar = () => {
 	return (
 		<nav className="navbar navbar-light bg-light">
 			<div className="container">
-				<Link to="/">
-					<span className="navbar-brand mb-0 h1"></span>
+				<Link to="/home">
+					<span className="navbar-brand mb-0 h1">Inicio</span>
 				</Link>
 
 				<div className="ml-auto d-flex align-items-center gap-2">
 					<Link to="/demo">
-						
+						<button className="btn btn-outline-primary">Demo</button>
 					</Link>
 
 					{user ? (

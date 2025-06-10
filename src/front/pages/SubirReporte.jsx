@@ -2,7 +2,7 @@ import { useState } from 'react'
 import ReportForm from '../components/ReportForm'
 import ReportCard from '../components/ReportCard'
 
-export const Feed = () => {
+export const SubirReporte = () => {
     const [reports, setReports] = useState([])
 
     const addReport = (newReport) => {
@@ -11,9 +11,9 @@ export const Feed = () => {
 
     return (
         <div className="bg-light min-vh-100">
-            <header className="bg-white shadow-sm py-3 text-center fixed-top">
+            {/* <header className="bg-white shadow-sm py-3 text-center fixed-top">
                 <h1 className="h4 mb-0">📍 AppReportes</h1>
-            </header>
+            </header> */}
 
             <main className="container pt-5 mt-4">
                 <div className="row">

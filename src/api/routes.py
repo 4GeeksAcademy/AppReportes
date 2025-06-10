@@ -23,40 +23,48 @@ bcrypt = Bcrypt(app)
 CORS(api)
 CORS(app)
 
-@api.route("/register", methods=["POST"])
-def register_user():
-    auth_header = request.headers.get("Authorization", "")
-    token = auth_header.replace("Bearer ", "")
+# @api.route("/register", methods=["POST"])
+# def register_user():
+#     auth_header = request.headers.get("Authorization", "")
+#     token = auth_header.replace("Bearer ", "")
 
-    if not token:
-        return jsonify({"error": "Token no enviado"}), 401
+#     if not token:
+#         return jsonify({"error": "Token no enviado"}), 401
 
-    try:
-        # Verifica el token
-        decoded_token = auth.verify_id_token(token)
-        firebase_uid = decoded_token["uid"]
-        email = decoded_token["email"]
-        nombre = decoded_token.get("name", "")
-        picture = decoded_token.get("picture", "")
+#     try:
+#         # Verifica el token
+#         decoded_token = auth.verify_id_token(token)
+#         firebase_uid = decoded_token["uid"]
+#         email = decoded_token["email"]
+#         nombre = decoded_token.get("name", "")
+#         picture = decoded_token.get("picture", "")
 
-        # Verifica si el usuario ya existe
-        user = User.query.filter_by(firebase_uid=firebase_uid).first()
-        if not user:
-            # Crea el usuario en tu base de datos
-            user = User(
-                firebase_uid=firebase_uid,
-                email=email,
-                nombre=nombre,
-                foto_url=picture,
-            )
-            db.session.add(user)
-            db.session.commit()
+#         # Verifica si el usuario ya existe
+#         user = User.query.filter_by(firebase_uid=firebase_uid).first()
+#         if not user:
+#             # Crea el usuario en tu base de datos
+#             user = User(
+#                 firebase_uid=firebase_uid,
+#                 email=email,
+#                 nombre=nombre,
+#                 foto_url=picture,
+#             )
+#             db.session.add(user)
+#             db.session.commit()
 
-        return jsonify(user.serialize()), 200
+#         return jsonify(user.serialize()), 200
 
-    except Exception as e:
-        print("❌ Error verificando el token:", e)
-        return jsonify({"error": "Token inválido o verificación fallida"}), 401
+#     except Exception as e:
+#         print("❌ Error verificando el token:", e)
+#         return jsonify({"error": "Token inválido o verificación fallida"}), 401
+
+# @api.route("/admin", methods=["GET"])
+# @jwt_required()
+# def admin_route():
+#     claims = get_jwt()
+#     if not claims.get("is_admin", False):
+#         return jsonify({"msg": "Acceso denegado"}), 403
+#     return jsonify({"msg": "Bienvenido Admin"})
 
 @api.route("/firebase-auth", methods=["POST"])
 @jwt_required()
@@ -102,74 +110,73 @@ def handle_hello_protected():
     # print(f"Profile picture del usuario autenticado: {profile_picture}")
     return jsonify(response_body), 200
 
-# @api.route("/admin", methods=["GET"])
-# @jwt_required()
-# def admin_route():
-#     claims = get_jwt()
-#     if not claims.get("is_admin", False):
-#         return jsonify({"msg": "Acceso denegado"}), 403
-#     return jsonify({"msg": "Bienvenido Admin"})
 
 
-@api.route('/users', methods=['GET'])
-def get_users():
-    users = User.query.all()
-    return jsonify([
-        {
-            "id": user.id,
-            "email": user.email
-        } for user in users
-    ]), 200
-
-@api.route('/user/<int:user_id>/content', methods=['GET'])
-def get_user_content(user_id):
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"error": "Usuario no encontrado"}), 404
-
-    result = []
-    for photo in user.photos:
-        result.append({
-            "photo_id": photo.id,
-            "url": photo.url,
-            "comments": [
-                {
-                    "id": comment.id,
-                    "content": comment.content
-                } for comment in photo.comments
-            ]
-        })
-
-    return jsonify(result), 200
-
-@api.route('/photo/<int:photo_id>', methods=['DELETE'])
-def delete_photo(photo_id):
-    from api.models import Photo
-    photo = Photo.query.get(photo_id)
-    if not photo:
-        return jsonify({"error": "Foto no encontrada"}), 404
-    db.session.delete(photo)
-    db.session.commit()
-    return jsonify({"message": "Foto y comentarios eliminados"}), 200
 
 
-@api.route('/comment/<int:comment_id>', methods=['DELETE'])
-def delete_comment(comment_id):
-    from api.models import Comment
-    comment = Comment.query.get(comment_id)
-    if not comment:
-        return jsonify({"error": "Comentario no encontrado"}), 404
-    db.session.delete(comment)
-    db.session.commit()
-    return jsonify({"message": "Comentario eliminado"}), 200
 
-@api.route('/comment/<int:comment_id>', methods=['PUT'])
-def edit_comment(comment_id):
-    from api.models import Comment
-    data = request.get_json()
-    comment = Comment.query.get(comment_id)
-    if not comment:
-        return jsonify({"error": "Comentario no encontrado"}), 404
-    comment.content = data.get("content", comment.content)
-    db.session.commit()
-    return jsonify({"message": "Comentario actualizado"}), 200
+
+
+
+# @api.route('/users', methods=['GET'])
+# def get_users():
+#     users = User.query.all()
+#     return jsonify([
+#         {
+#             "id": user.id,
+#             "email": user.email
+#         } for user in users
+#     ]), 200
+
+# @api.route('/user/<int:user_id>/content', methods=['GET'])
+# def get_user_content(user_id):
+#     user = User.query.get(user_id)
+#     if not user:
+#         return jsonify({"error": "Usuario no encontrado"}), 404
+
+#     result = []
+#     for photo in user.photos:
+#         result.append({
+#             "photo_id": photo.id,
+#             "url": photo.url,
+#             "comments": [
+#                 {
+#                     "id": comment.id,
+#                     "content": comment.content
+#                 } for comment in photo.comments
+#             ]
+#         })
+
+#     return jsonify(result), 200
+
+# @api.route('/photo/<int:photo_id>', methods=['DELETE'])
+# def delete_photo(photo_id):
+#     from api.models import Photo
+#     photo = Photo.query.get(photo_id)
+#     if not photo:
+#         return jsonify({"error": "Foto no encontrada"}), 404
+#     db.session.delete(photo)
+#     db.session.commit()
+#     return jsonify({"message": "Foto y comentarios eliminados"}), 200
+
+
+# @api.route('/comment/<int:comment_id>', methods=['DELETE'])
+# def delete_comment(comment_id):
+#     from api.models import Comment
+#     comment = Comment.query.get(comment_id)
+#     if not comment:
+#         return jsonify({"error": "Comentario no encontrado"}), 404
+#     db.session.delete(comment)
+#     db.session.commit()
+#     return jsonify({"message": "Comentario eliminado"}), 200
+
+# @api.route('/comment/<int:comment_id>', methods=['PUT'])
+# def edit_comment(comment_id):
+#     from api.models import Comment
+#     data = request.get_json()
+#     comment = Comment.query.get(comment_id)
+#     if not comment:
+#         return jsonify({"error": "Comentario no encontrado"}), 404
+#     comment.content = data.get("content", comment.content)
+#     db.session.commit()
+#     return jsonify({"message": "Comentario actualizado"}), 200
