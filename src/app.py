@@ -1,8 +1,3 @@
-# # user look loader miro los claims 
-# @jwt_manager.user_lookup_loader
-# def decode_key_loader
-# en /userinfo tengo que usar current user
-
 """
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
@@ -12,7 +7,7 @@ from flask_cors import CORS
 from flask_migrate import Migrate
 from flask_swagger import swagger
 from api.utils import APIException, generate_sitemap
-from api.models import db, TokenBlockedList, User
+from api.models import db, User
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
@@ -85,28 +80,15 @@ def user_lookup_loader(jwt_headers, claims: dict):
         db.session.commit()
 
     # Añadir a los claims el ID local de la base de datos
+    # Es decir, retorna el claims junto con la info de la propia base de datos de ese usuario (como el id) en una respuesta
     claims["id"] = db_user.id
     # claims["fullname"] = db_user.fullname
+    # Para buscar info de usuario para cualquier cosa se busca con el get_current_user
 
     return {
         "database": db_user.serialize(),
         "tokenClaims": claims
     }
-
-
-# @jwt_manager.user_lookup_loader
-# def user_lookup_loader(jwt_headers, claims: dict):
-#     # DbUser = User.query.filter_by(firebase_id=claims["user_id"]).first()
-#     # return {"database": DbUser.serialize(), "tokenClaims": claims}
-
-#     # Consultar en la base de datos el user id de firebase para ver si existe
-#     # Si no existe, crea el usuario en la base de datos registrando el nombre, el user_id (firebase), el email
-#     # Luego retorna el claims junto con la info de la propia base de datos de ese usuario (como el id) en una respuesta
-#     # Para buscar info de usuario para cualquier cosa se busca con el get_current_user
-#     # Sacar ademas del user_id el nombre de usuario
-#     # Si necesito alguna informacion para que la vean otros usuarios necesito sacarla de los claims y guardarla en la base de datos
-#     return claims
-
 
 # database condiguration
 db_url = os.getenv("DATABASE_URL")

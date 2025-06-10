@@ -19,7 +19,6 @@ wtforms = "==3.1.2"
 sqlalchemy = "*"
 eralchemy2 = "*"
 flask-script = "*"
-flask-migrate = "*"
 flask-jwt-extended = "*"
 bcrypt = "*"
 flask-bcrypt = "*"
@@ -27,6 +26,7 @@ firebase-admin = "*"
 python-jose = {extras = ["cryptography"], version = "*"}
 flask-cors = "*"
 cors = "*"
+flask-migrate = "*"
 
 [requires]
 python_version = "3.13"

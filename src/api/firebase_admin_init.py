@@ -1,3 +1,5 @@
+#Sí hace falta
+
 import firebase_admin  # <-- AÑADE ESTA LÍNEA
 from firebase_admin import credentials, auth as firebase_auth
 
@@ -8,3 +10,5 @@ if not firebase_admin._apps:
 
 # Exporta el auth para que routes.py lo pueda importar
 auth = firebase_auth
+
+

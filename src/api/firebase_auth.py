@@ -1,12 +1,9 @@
+#Sí hace falta
+
 import firebase_admin
 from firebase_admin import credentials, auth
 from flask import request, jsonify
 from functools import wraps
-
-# # Inicializa Firebase Admin SDK (solo una vez)
-# cred = credentials.Certificate("src/api/firebase-adminsdk.json")  # <-- Ajusta la ruta a tu JSON
-# if not firebase_admin._apps:
-#     firebase_admin.initialize_app(cred)
 
 def firebase_required(f):
     @wraps(f)

@@ -1,7 +1,6 @@
 import { getAuth } from "firebase/auth";
 
 const apiURL=import.meta.env.VITE_BACKEND_URL 
-// Cuidado porque su BACKEND-URL termina en api
 
 export const publicFetch=async(endpoint, method = "GET", body=null)=>{
     // Inicializar los parámetros de la petición con el método
@@ -23,7 +22,6 @@ export const publicFetch=async(endpoint, method = "GET", body=null)=>{
         if(response.status>=400){
             console.error(response.status,response.statusText)
 
-            //return await response.json()
         }
         return await response.json()
     } catch(error){
@@ -66,9 +64,6 @@ export const privateFetch = async (endpoint, method = "GET", body = null, token)
   }
 };
 
-
-
-
 export const authWithFirebase = async (idToken) => {
     try {
         if (!idToken) {
@@ -93,10 +88,6 @@ export const authWithFirebase = async (idToken) => {
 
         const data = await res.json();
         console.log("Respuesta JSON backend /firebase-auth:", data);
-
-        // Puedo quitarlo pero vamos a comprobar cosas antes
-        // localStorage.setItem("jwt", data.token);
-        console.log("Token JWT no guardado en localStorage");
 
         return data;
     } catch (error) {

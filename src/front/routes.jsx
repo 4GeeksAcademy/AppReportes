@@ -7,7 +7,7 @@ import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
 import { Single } from "./pages/Single";
 import { Demo } from "./pages/Demo";
-import { Login } from "./pages/Login";
+// import { Login } from "./pages/Login";
 import { FirebaseLogin } from "./pages/FirebaseLogin";
 import { FirebaseSignup } from "./pages/FirebaseSignup";
 import { PrivateRoute } from "./components/PrivateRoute";
@@ -22,7 +22,7 @@ export const router = createBrowserRouter(
       {/* Rutas públicas */}
       <Route path="/firebase-login" element={<FirebaseLogin />} />
       <Route path="/signup" element={<FirebaseSignup />} />
-      <Route path="/login" element={<Login />} />
+      {/* <Route path="/login" element={<Login />} /> */}
       <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Rutas privadas */}
