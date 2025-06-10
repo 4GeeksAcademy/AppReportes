@@ -3,29 +3,72 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "../firebaseAuth";
 
-// 1. Creamos el contexto
 const AuthContext = createContext();
 
-// 2. Provider para envolver la app
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true); // para saber si Firebase ya respondió
+  const [user, setUser] = useState(null);           // Usuario Firebase
+  const [userBackend, setUserBackend] = useState(null); // Usuario del backend
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser || null);
-      setLoading(false); // ya tenemos respuesta
+      setUserBackend(null); // Limpiar datos anteriores
+
+      if (firebaseUser) {
+        try {
+          const token = await firebaseUser.getIdToken();
+
+          // Paso 1: Notificamos al backend y creamos el usuario si no existe
+          const authRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/firebase-auth`, {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          });
+
+          if (!authRes.ok) {
+            console.error("Error en /firebase-auth:", await authRes.text());
+            setUserBackend(null);
+            setLoading(false);
+            return;
+          }
+
+          // Paso 2: Obtener info del usuario desde el backend
+          const infoRes = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/userinfo`, {
+            method: "GET",
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          });
+
+          const text = await infoRes.text();
+          console.log("Respuesta raw de /userinfo:", text);
+
+          try {
+            const data = JSON.parse(text);
+            setUserBackend(data.user || data);
+          } catch (jsonError) {
+            console.error("Respuesta no era JSON válida:", jsonError);
+            setUserBackend(null);
+          }
+        } catch (error) {
+          console.error("Error al autenticar con backend:", error);
+          setUserBackend(null);
+        }
+      }
+
+      setLoading(false);
     });
 
-    return () => unsubscribe(); // limpiamos listener al desmontar
+    return () => unsubscribe();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading }}>
+    <AuthContext.Provider value={{ user, userBackend, loading }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// 3. Hook para acceder al contexto
 export const useAuth = () => useContext(AuthContext);

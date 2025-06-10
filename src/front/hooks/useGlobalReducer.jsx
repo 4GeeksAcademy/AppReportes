@@ -1,6 +1,7 @@
 // Import necessary hooks and functions from React.
 import { useContext, useReducer, createContext, useEffect } from "react";
 import storeReducer, { initialStore } from "../store"  // Import the reducer and the initial state.
+import { getAuth } from "firebase/auth";
 
 // Create a context to hold the global state of the application
 // We will call this global state the "store" to avoid confusion while using local states
@@ -14,9 +15,24 @@ export function StoreProvider({ children }) {
     //El primer useEffect de mi aplicacion
     // se utiliza para inicializar cosas
     useEffect(() => {
-        // Carga del token desde el loscalStorage
-        dispatch({type:"LOAD_TOKEN"})
-    },[])
+        const unsubscribe = getAuth().onAuthStateChanged(async (user) => {
+            if (!user) {
+            // No hay usuario, puede que haya cerrado sesión
+            console.warn("No hay usuario autenticado.");
+            return;
+            }
+
+            try {
+            const token = await user.getIdToken();
+            dispatch({ type: "LOAD_TOKEN", payload: token });
+            } catch (error) {
+            console.error("Error al obtener el token:", error);
+            }
+        });
+
+        return () => unsubscribe(); // buena práctica: limpiar el listener
+        }, []);
+
     
     // Provide the store and dispatch method to all child components.
     return <StoreContext.Provider value={{ store, dispatch }}>

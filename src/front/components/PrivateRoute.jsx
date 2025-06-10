@@ -6,7 +6,7 @@ export const PrivateRoute = ({ children }) => {
 
   if (loading) return <p>Cargando sesión...</p>;
 
-  if (!user) return <Navigate to="/firebase-login" />;
+  if (!user) return <Navigate to="/signup" />;
 
   return children;
 };

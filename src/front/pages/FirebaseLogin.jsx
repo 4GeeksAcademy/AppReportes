@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { auth } from "../firebaseAuth"; // Tu configuración de Firebase
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
-
+import { auth } from "../firebaseAuth";
+import { useNavigate, Link } from "react-router-dom";
+import { authWithFirebase } from "../fetch/apifetch";
 
 export const FirebaseLogin = () => {
   const [email, setEmail] = useState("");
@@ -16,11 +15,20 @@ export const FirebaseLogin = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      console.log("Login exitoso:", user);
-      navigate("/"); // Redirigir al home
+
+      // ✅ Obtener el token de Firebase
+      const idToken = await user.getIdToken();
+      console.log("🔐 Token generado (email/password):", idToken);
+
+      // 🔁 Enviar token al backend
+      const res = await authWithFirebase(idToken); 
+      console.log("Respuesta authWithFirebase backend:", res);
+
+      alert("✅ Login exitoso");
+      navigate("/");
     } catch (error) {
       console.error("Error al iniciar sesión:", error.message);
-      alert("Email o contraseña incorrectos");
+      alert("❌ Error: " + error.message);
     }
   };
 
@@ -28,10 +36,17 @@ export const FirebaseLogin = () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-      console.log("Login con Google exitoso:", user);
-      navigate("/"); // Redirigir al home
+
+      const idToken = await user.getIdToken();
+      console.log("✅ Token generado (Google):", idToken);
+
+      const res = await authWithFirebase(idToken);
+      console.log("Login con Google exitoso:", res);
+
+      alert("✅ Login con Google exitoso");
+      navigate("/");
     } catch (error) {
-      console.error("Error al iniciar sesión con Google:", error.message);
+      console.error("Error en Google login:", error.message);
       alert("❌ Error con Google: " + error.message);
     }
   };
@@ -64,15 +79,13 @@ export const FirebaseLogin = () => {
       </form>
       <p className="mt-3">
         <Link to="/reset-password">¿Olvidaste tu contraseña?</Link>
-      </p>   
+      </p>
 
       <hr />
 
       <button className="btn btn-danger" onClick={handleGoogleLogin}>
         Iniciar sesión con Google
       </button>
-
-
     </div>
   );
 };

@@ -1,3 +1,5 @@
+import { getAuth } from "firebase/auth";
+
 const apiURL=import.meta.env.VITE_BACKEND_URL 
 // Cuidado porque su BACKEND-URL termina en api
 
@@ -5,9 +7,7 @@ export const publicFetch=async(endpoint, method = "GET", body=null)=>{
     // Inicializar los parámetros de la petición con el método
     let params={
         method,
-        headers:{
-            "Access-Control-Allow-Origin":"*"
-        }
+        headers:{}
     };
     // Si hay un body se agrega al parámetro y se agrega la cabecera
     if(body){
@@ -32,32 +32,75 @@ export const publicFetch=async(endpoint, method = "GET", body=null)=>{
     }
 }
 
-export const privateFetch=async(endpoint, method = "GET", body=null)=>{
-    // Inicializar los parámetros de la petición con el método
-    let params={
-        method,
-        headers:{
-            "Access-Control-Allow-Origin":"*",
-            "Authorization": "Bearer " + localStorage.getItem("token")
-        }
-    }
-    // Si hay un body se agrega al parámetro y se agrega la cabecera
-    if(body){
-        params.body=JSON.stringify(body)
-        params.headers["Content-Type"]="application/json"     
-    }
+export const privateFetch = async (endpoint, method = "GET", body = null, token) => {
+  if (!token) {
+    console.warn("No token para privateFetch");
+    return null;
+  }
+
+  let params = {
+    method,
+    headers: {
+      "Authorization": "Bearer " + token,
+    },
+  };
+
+  if (body) {
+    params.body = JSON.stringify(body);
+    params.headers["Content-Type"] = "application/json";
+  }
+
+  try {
+    const res = await fetch(apiURL + endpoint, params);
+    const text = await res.text();
+
     try {
-        let response=await fetch(apiURL + endpoint,params)
-        if(response.status>=500){
-            console.error(response.status,response.statusText)
-            return null
+      return JSON.parse(text);
+    } catch {
+      console.error("Respuesta no es JSON válida");
+      return null;
+    }
+  } catch (err) {
+    console.error("Error en privateFetch:", err);
+    return null;
+  }
+};
+
+
+
+
+export const authWithFirebase = async (idToken) => {
+    try {
+        if (!idToken) {
+            console.warn("No se recibió token como argumento en login()");
+            return null;
         }
-        if(response.status>=400){
-            console.error(response.status,response.statusText)
+
+        const res = await fetch(`${apiURL}/api/firebase-auth`, {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + idToken
+            }
+        });
+
+        console.log("Respuesta backend /firebase-auth status:", res.status);
+
+        if (!res.ok) {
+            const err = await res.json();
+            console.error("Login backend error:", err);
+            return null;
         }
-        return await response.json()
-    } catch(error){
-        console.error(error)
-        return null
+
+        const data = await res.json();
+        console.log("Respuesta JSON backend /firebase-auth:", data);
+
+        // Puedo quitarlo pero vamos a comprobar cosas antes
+        // localStorage.setItem("jwt", data.token);
+        console.log("Token JWT no guardado en localStorage");
+
+        return data;
+    } catch (error) {
+        console.error("Error en función login:", error);
+        return null;
     }
 }

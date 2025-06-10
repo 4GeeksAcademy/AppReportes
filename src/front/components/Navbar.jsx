@@ -8,9 +8,13 @@ export const Navbar = () => {
 	const { user } = useAuth(); // 👈 Obtenemos el usuario del contexto
 
 	const handleLogout = async () => {
-		await signOut(auth);
-		navigate("/firebase-login");
-	};
+		try {
+			await signOut(auth);
+			navigate("/firebase-login");
+		} catch (error) {
+			console.error("Error al cerrar sesión:", error.message);
+		}
+		};
 
 	return (
 		<nav className="navbar navbar-light bg-light">

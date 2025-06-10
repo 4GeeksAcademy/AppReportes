@@ -7,12 +7,13 @@ db = SQLAlchemy()
 
 class User(db.Model):
     __tablename__ = "users"
-
+    # ni password ni mail ni fullname
+    # claims para roles
+    # cambiar el username por un full name de unos 300 caracteres
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)  # Firebase UID
-    fullname: Mapped[str] = mapped_column(String(300), nullable=True)
+    firebase_uid: Mapped[str] = mapped_column(String(100), unique=True, nullable=False) #unique? user_id de firebase
+    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
-    profile_picture: Mapped[str] = mapped_column(String(300), nullable=True)
     is_active: Mapped[bool] = mapped_column(default=True)
 
     reportes: Mapped[List["Reporte"]] = relationship("Reporte", back_populates="author")
@@ -22,14 +23,12 @@ class User(db.Model):
 
     def serialize(self):
         return {
-            "id": self.id,
-            "fullname": self.fullname,
-            "firebase_uid": self.user_id,
-            "email": self.email,
-            "propile_picture": self.profile_picture,
-            "isActive": self.is_active
-        }
-
+                "id": self.id,  # dejo este
+                "username": self.username,
+                "firebase_uid": self.firebase_uid,
+                "email": self.email,
+                "isActive":self.is_active # dejo este
+                }
 
 # Agrego un modelo para guardar los tokens bloqueados por cierres de sesion
 class TokenBlockedList(db.Model):

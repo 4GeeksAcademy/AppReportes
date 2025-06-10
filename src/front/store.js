@@ -1,8 +1,10 @@
+import { getAuth } from "firebase/auth";
+
 export const initialStore=()=>{
   return{
     message: null,
     token:null,
-    userInfo:{},
+    userInfo:null,
     todos: [
       {
         id: 1,
@@ -42,7 +44,7 @@ export default function storeReducer(store, action = {}) {
     case 'LOAD_TOKEN':
       return {
         ...store,
-        token:localStorage.getItem("token") || null
+        token: action.payload
       };
     case 'SET_USER_INFO':
       return {
@@ -50,6 +52,6 @@ export default function storeReducer(store, action = {}) {
         userInfo:action.payload
       };
     default:
-      throw Error('Unknown action.');
+      return store;
   }    
 }
