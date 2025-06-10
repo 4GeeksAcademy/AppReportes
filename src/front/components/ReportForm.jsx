@@ -52,7 +52,7 @@ export default function ReportForm({ onSubmit }) {
       </div>
 
       <button type="submit" className="btn btn-primary w-100">
-        Publicar Reporte #sdsdcd
+        Publicar Reporte #sdsdcddvdsvdsgit
       </button>
     </form>
   ) 
