@@ -1,7 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import String, Integer, Boolean, ForeignKey
+
+from sqlalchemy import String, Integer, Boolean, ForeignKey, Text
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from typing import List
+
 
 db = SQLAlchemy()
 
@@ -36,7 +38,6 @@ class Reporte(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     text: Mapped[str] = mapped_column(String(200), nullable=False)
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-
     author: Mapped["User"] = relationship("User", back_populates="reportes")
     images: Mapped[List["Media"]] = relationship("Media", back_populates="reporte")
     comments: Mapped[List["Comment"]] = relationship("Comment", back_populates="reporte")
@@ -108,3 +109,4 @@ class Vote(db.Model):
 
     user: Mapped["User"] = relationship("User", back_populates="votes")
     reporte: Mapped["Reporte"] = relationship("Reporte", back_populates="votes")
+
