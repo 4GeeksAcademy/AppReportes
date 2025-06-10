@@ -16,6 +16,18 @@ import { UserProfile } from "./pages/UserProfile";
 import { Perfil } from "./pages/Perfil";
 import { Moderador } from "./pages/Moderador";
 import { SubirReporte } from "./pages/SubirReporte";
+import { MisDatos } from "./pages/MisDatos";
+import { MisReportes } from "./pages/MisReportes";
+import { Favoritos } from "./pages/Favoritos";
+import { Reporte } from "./pages/Reporte";
+import { HomeModerador } from "./pages/HomeModerador";
+import { Denuncias } from "./pages/Denuncias";
+import { UsuariosSancionados } from "./pages/Sancionados";
+import { BuscadorModerador } from "./pages/BuscadorModerador";
+import { HomeAdmin } from "./pages/HomeAdmin";
+import { GestionarUsuarios } from "./pages/GestionarUsuarios";
+import { BuscadorAdmin } from "./pages/BuscadorAdmin";
+
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -27,7 +39,18 @@ export const router = createBrowserRouter(
       <Route path="reset-password" element={<ResetPassword />} />
       <Route path="feed" element={<Feed />} />
       <Route path="subir-reporte" element={<SubirReporte />} />
-   
+      <Route path="mis-datos" element={<MisDatos />} />
+      <Route path="mis-reportes" element={<MisReportes />} />
+      <Route path="favoritos" element={<Favoritos />} />
+      <Route path="reporte" element={<Reporte />} />
+      <Route path="moderador" element={<HomeModerador />} />
+      <Route path="denuncias" element={<Denuncias />} />
+      <Route path="usuarios-sancionados" element={<UsuariosSancionados />} />
+      <Route path="buscador-moderador" element={<BuscadorModerador />} />
+      <Route path="homeadmin" element={<HomeAdmin />} />
+      <Route path="gestionar-usuarios" element={<GestionarUsuarios />} />
+      <Route path="buscador-admin" element={<BuscadorAdmin />} />
+
       {/* <Route
         index
         element={
