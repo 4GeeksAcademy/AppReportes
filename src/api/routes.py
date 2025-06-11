@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User
+from api.models import db, User, Reporte, Media
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -135,8 +135,163 @@ def delete_user(id):
 
     return jsonify({"msg": "Usuario eliminado correctamente"}), 200
 
-##
+#editar datos de usuario
+@api.route("/user/<int:id>", methods=["PUT"])
+@jwt_required()
+def update_user(id):
+    current = get_current_user()
+    claims = current["tokenClaims"]
+    db_user = current["database"]
+    requester_id = claims.get("id")
+    # requester_role = db_user.get("role")
 
+    # # Solo puede editar su propio perfil o debe ser admin/moderador
+    # if requester_id != id and requester_role not in ["admin", "moderador"]:
+    #     return jsonify({"error": "No autorizado"}), 403
+
+    user = User.query.get(id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    data = request.get_json()
+
+    # Solo permitimos actualizar ciertos campos
+    allowed_fields = ["fullname", "profile_picture"]
+    for field in allowed_fields:
+        if field in data:
+            setattr(user, field, data[field])
+
+    db.session.commit()
+
+    return jsonify({"msg": "Perfil actualizado correctamente", "user": user.serialize()}), 200
+
+#un usuario crea un reporte (tiene que estar logueado, pero no hay que poner id por esta misma razon)
+@api.route('/reportes', methods=['POST'])
+@jwt_required()
+def create_reporte():
+    data = request.get_json()
+    if not data or "text" not in data:
+        return jsonify({"error": "Falta el campo 'text'"}), 400
+    current = get_current_user()
+    claims = current["tokenClaims"]
+    author_id = claims.get("id")
+
+    # Crear el reporte
+    new_reporte = Reporte(
+        text=data["text"],
+        author_id=author_id
+    )
+    db.session.add(new_reporte)
+    db.session.flush()  # Para obtener el ID del reporte antes de commit
+
+    # Si se incluye imagen, se guarda como Media
+    if "image" in data and data["image"]:
+        new_media = Media(
+            image=data["image"],
+            reporte_id=new_reporte.id
+        )
+        db.session.add(new_media)
+
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Reporte creado correctamente",
+        "reporte": new_reporte.serialize()
+    }), 201
+
+#obtener todos los reportes
+@api.route('/reportes', methods=['GET'])
+def get_reports():
+    reportes = Reporte.query.all()
+    return jsonify([reporte.serialize() for reporte in reportes]), 200
+
+# obtener todos los reportes de un usuario
+@api.route('/users/<int:user_id>/reportes', methods=['GET'])
+def get_reports_by_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    # Obtenemos todos los reportes del usuario
+    reports = Reporte.query.filter_by(author_id=user_id).all()
+
+    return jsonify({
+        "user": user.serialize(),
+        "reports": [report.serialize() for report in reports]
+    }), 200
+
+#obtener un reporte concreto de un solo usuario
+@api.route('/reportes/<int:id>', methods=['GET'])
+def get_report_by_id(id):
+    reporte = Reporte.query.get(id)
+
+    if not reporte:
+        return jsonify({"msg": "Reporte no encontrado"}), 404
+
+    return jsonify(reporte.serialize()), 200
+
+#para que un usuario pueda editar su reporte
+@api.route('/users/<int:user_id>/reports/<int:report_id>', methods=['PUT'])
+@jwt_required()
+def update_report(user_id, report_id):
+    current_user = get_current_user()
+    if current_user.id != user_id:
+        return jsonify({"error": "No autorizado para editar este reporte"}), 403
+
+    report = Reporte.query.filter_by(id=report_id, author_id=user_id).first()
+    if not report:
+        return jsonify({"error": "Reporte no encontrado o no pertenece al usuario"}), 404
+
+    data = request.get_json()
+
+    if 'text' in data:
+        report.text = data['text']
+
+    if 'images' in data:
+        # Borra las imágenes antiguas
+        for img in report.images:
+            db.session.delete(img)
+        db.session.commit()
+
+        # Añade las nuevas imágenes
+        for image_url in data['images']:
+            new_media = Media(type='image', image=image_url, reporte_id=report.id)
+            db.session.add(new_media)
+
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Reporte actualizado correctamente",
+        "reporte": report.serialize()
+    }), 200
+
+
+
+# para que un usuario elimine su reporte
+@api.route('/reportes/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_reporte(id):
+    current_user = get_current_user()
+    db_user = current_user["database"]
+
+    reporte = Reporte.query.get(id)
+
+    if not reporte:
+        return jsonify({"msg": "Reporte no encontrado"}), 404
+
+    if reporte.author_id != db_user["id"]:
+        return jsonify({"msg": "No tienes permiso para eliminar este reporte"}), 403
+
+    # Primero eliminamos relaciones si es necesario (por cascade o manualmente)
+    # db.session.delete() los eliminará si tienes cascade configurado
+
+    db.session.delete(reporte)
+    db.session.commit()
+
+    return jsonify({"msg": "Reporte eliminado correctamente"}), 200
+
+##
+# FIN ENDPOINTS MARTIN
 
 
 

@@ -36,33 +36,41 @@ class Reporte(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     text: Mapped[str] = mapped_column(String(200), nullable=False)
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    
     author: Mapped["User"] = relationship("User", back_populates="reportes")
-    images: Mapped[List["Media"]] = relationship("Media", back_populates="reporte")
-    comments: Mapped[List["Comment"]] = relationship("Comment", back_populates="reporte")
-    favorites: Mapped[List["Favorite"]] = relationship("Favorite", back_populates="reporte")
-    votes: Mapped[List["Vote"]] = relationship("Vote", back_populates="reporte")
+    images: Mapped[List["Media"]] = relationship("Media", back_populates="reporte", cascade="all, delete-orphan")
+    comments: Mapped[List["Comment"]] = relationship("Comment", back_populates="reporte", cascade="all, delete-orphan")
+    favorites: Mapped[List["Favorite"]] = relationship("Favorite", back_populates="reporte", cascade="all, delete-orphan")
+    votes: Mapped[List["Vote"]] = relationship("Vote", back_populates="reporte", cascade="all, delete-orphan")
 
+    
     def serialize(self):
         return {
-                "id": self.id, 
-                "text": self.text, 
-                "author_id": self.author_id
-                }
+            "id": self.id,
+            "text": self.text,
+            "author_id": self.author_id,
+            "author": self.author.serialize() if self.author else None,
+            "images": [image.serialize() for image in self.images],
+            "comments": [comment.serialize() for comment in self.comments],
+            "favorites_count": len(self.favorites),
+            "votes": [{"user_id": vote.user_id, "is_upvote": vote.is_upvote} for vote in self.votes]
+        }
 
 
 class Media(db.Model):
     __tablename__ = "media"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    type: Mapped[enumerate] = mapped_column(String(20), default="image")
-    image: Mapped[enumerate] = mapped_column(String(20), default="image")
+    type: Mapped[str] = mapped_column(String(20), default="image")
+    image: Mapped[str] = mapped_column(String(500), nullable=True)
     reporte_id: Mapped[int] = mapped_column(ForeignKey("reportes.id"), nullable=False)
 
     reporte: Mapped["Reporte"] = relationship("Reporte", back_populates="images")
 
     def serialize(self):
         return {
-                "id": self.id, 
+                "id": self.id,
+                "reporte_id": self.reporte_id, 
                 "type": self.type, 
                 "image": self.image
                 }
