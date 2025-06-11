@@ -11,7 +11,8 @@ from flask_jwt_extended import (
     get_jwt_identity, get_jwt, current_user, get_current_user
 )
 from api.firebase_auth import firebase_required
-from api.firebase_admin_init import firebase_admin, auth as firebase_auth
+from api.firebase_admin_init import firebase_auth
+from firebase_admin import auth
 
 
 api = Blueprint('api', __name__)
@@ -22,41 +23,6 @@ bcrypt = Bcrypt(app)
 # Allow CORS requests to this API
 CORS(api)
 CORS(app)
-
-# @api.route("/register", methods=["POST"])
-# def register_user():
-#     auth_header = request.headers.get("Authorization", "")
-#     token = auth_header.replace("Bearer ", "")
-
-#     if not token:
-#         return jsonify({"error": "Token no enviado"}), 401
-
-#     try:
-#         # Verifica el token
-#         decoded_token = auth.verify_id_token(token)
-#         firebase_uid = decoded_token["uid"]
-#         email = decoded_token["email"]
-#         nombre = decoded_token.get("name", "")
-#         picture = decoded_token.get("picture", "")
-
-#         # Verifica si el usuario ya existe
-#         user = User.query.filter_by(firebase_uid=firebase_uid).first()
-#         if not user:
-#             # Crea el usuario en tu base de datos
-#             user = User(
-#                 firebase_uid=firebase_uid,
-#                 email=email,
-#                 nombre=nombre,
-#                 foto_url=picture,
-#             )
-#             db.session.add(user)
-#             db.session.commit()
-
-#         return jsonify(user.serialize()), 200
-
-#     except Exception as e:
-#         print("❌ Error verificando el token:", e)
-#         return jsonify({"error": "Token inválido o verificación fallida"}), 401
 
 # @api.route("/admin", methods=["GET"])
 # @jwt_required()
@@ -111,8 +77,65 @@ def handle_hello_protected():
     return jsonify(response_body), 200
 
 
+## ENDPOINTS MARTIN
 
+#obtener todos los usuarios
+@api.route("/users", methods=["GET"])
+@jwt_required()
+def list_users():
+    # claims = get_jwt()
+    # role = claims.get("role")
 
+    # if role not in ["admin", "moderador"]:
+    #     return jsonify({"error": "No autorizado"}), 403
+
+    users = User.query.all()
+    user_list = [user.serialize() for user in users]
+    
+    return jsonify(user_list), 200
+
+#obtener usuario
+@api.route("/user/<int:id>", methods=["GET"])
+@jwt_required()
+def get_user(id):
+    claims = get_jwt()
+    # requester_role = claims.get("role")
+    requester_id = claims.get("id")
+
+    # # Verifica si el usuario puede acceder a este recurso
+    # if requester_role not in ["admin", "moderador"] and requester_id != id:
+    #     return jsonify({"error": "No autorizado"}), 403
+
+    user = User.query.get(id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    return jsonify(user.serialize()), 200
+
+#borrar usuario
+@api.route("/user/<int:id>", methods=["DELETE"])
+@jwt_required()
+def delete_user(id):
+    # 1. Buscar el usuario en la base de datos
+    user = User.query.get(id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+    claims = get_jwt()
+    user_id=claims.get("user_id")
+    try:
+        # ⚠️ Asegúrate de que user.user_id es el UID de Firebase
+        
+        auth.delete_user(user_id)
+    except Exception as e:
+        return jsonify({"error": f"Error al eliminar en Firebase: {str(e)}"}), 500
+
+    # 3. Eliminar de la base de datos
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({"msg": "Usuario eliminado correctamente"}), 200
+
+##
 
 
 
