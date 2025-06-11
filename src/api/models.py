@@ -15,10 +15,10 @@ class User(db.Model):
     profile_picture: Mapped[str] = mapped_column(String(300), nullable=True)
     is_active: Mapped[bool] = mapped_column(default=True)
 
-    reportes: Mapped[List["Reporte"]] = relationship("Reporte", back_populates="author")
-    comments: Mapped[List["Comment"]] = relationship("Comment", back_populates="author")
-    favorites: Mapped[List["Favorite"]] = relationship("Favorite", back_populates="user")
-    votes: Mapped[List["Vote"]] = relationship("Vote", back_populates="user")
+    reportes: Mapped[List["Reporte"]] = relationship("Reporte", back_populates="author", cascade="all, delete-orphan")
+    comments: Mapped[List["Comment"]] = relationship("Comment", back_populates="author", cascade="all, delete-orphan")
+    favorites: Mapped[List["Favorite"]] = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
+    votes: Mapped[List["Vote"]] = relationship("Vote", back_populates="user", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -56,7 +56,6 @@ class Reporte(db.Model):
             "votes": [{"user_id": vote.user_id, "is_upvote": vote.is_upvote} for vote in self.votes]
         }
 
-
 class Media(db.Model):
     __tablename__ = "media"
 
@@ -75,7 +74,6 @@ class Media(db.Model):
                 "image": self.image
                 }
 
-
 class Comment(db.Model):
     __tablename__ = "comments"
 
@@ -93,7 +91,6 @@ class Comment(db.Model):
                 "comment_text": self.comment_text
                 }
 
-
 class Favorite(db.Model):
     __tablename__ = "favorites"
 
@@ -103,7 +100,6 @@ class Favorite(db.Model):
 
     user: Mapped["User"] = relationship("User", back_populates="favorites")
     reporte: Mapped["Reporte"] = relationship("Reporte", back_populates="favorites")
-
 
 class Vote(db.Model):
     __tablename__ = "votes"

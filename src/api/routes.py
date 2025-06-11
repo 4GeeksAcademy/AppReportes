@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Reporte, Media
+from api.models import db, User, Reporte, Media, Comment, Favorite, Vote
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -231,11 +231,16 @@ def get_report_by_id(id):
     return jsonify(reporte.serialize()), 200
 
 #para que un usuario pueda editar su reporte
-@api.route('/users/<int:user_id>/reports/<int:report_id>', methods=['PUT'])
+@api.route('/users/<int:user_id>/reportes/<int:report_id>', methods=['PUT'])
 @jwt_required()
 def update_report(user_id, report_id):
-    current_user = get_current_user()
-    if current_user.id != user_id:
+    current = get_current_user()
+    claims = current["tokenClaims"]
+    db_user = current["database"]
+    requester_id = claims.get("id")
+
+    # Solo puede editar su propio reporte
+    if requester_id != user_id:
         return jsonify({"error": "No autorizado para editar este reporte"}), 403
 
     report = Reporte.query.filter_by(id=report_id, author_id=user_id).first()
@@ -244,18 +249,22 @@ def update_report(user_id, report_id):
 
     data = request.get_json()
 
-    if 'text' in data:
-        report.text = data['text']
+    # Solo permitimos actualizar ciertos campos
+    allowed_fields = ["text"]
+    for field in allowed_fields:
+        if field in data:
+            setattr(report, field, data[field])
 
-    if 'images' in data:
-        # Borra las imágenes antiguas
+    # Si se actualizan imágenes
+    if "images" in data:
+        # Borrar imágenes antiguas
         for img in report.images:
             db.session.delete(img)
         db.session.commit()
 
-        # Añade las nuevas imágenes
-        for image_url in data['images']:
-            new_media = Media(type='image', image=image_url, reporte_id=report.id)
+        # Agregar nuevas imágenes
+        for image_url in data["images"]:
+            new_media = Media(type="image", image=image_url, reporte_id=report.id)
             db.session.add(new_media)
 
     db.session.commit()
@@ -264,8 +273,6 @@ def update_report(user_id, report_id):
         "msg": "Reporte actualizado correctamente",
         "reporte": report.serialize()
     }), 200
-
-
 
 # para que un usuario elimine su reporte
 @api.route('/reportes/<int:id>', methods=['DELETE'])
@@ -290,7 +297,158 @@ def delete_reporte(id):
 
     return jsonify({"msg": "Reporte eliminado correctamente"}), 200
 
-##
+# crear un comentario en un reporte
+@api.route('/reportes/<int:reporte_id>/comentarios', methods=['POST'])
+@jwt_required()
+def create_comment(reporte_id):
+    current = get_current_user()
+    claims = current["tokenClaims"]
+    db_user = current["database"]
+
+    data = request.get_json()
+    comment_text = data.get("comment_text", "").strip()
+
+    if not comment_text:
+        return jsonify({"error": "El comentario no puede estar vacío"}), 400
+
+    # Verificamos que el reporte exista
+    reporte = Reporte.query.get(reporte_id)
+    if not reporte:
+        return jsonify({"error": "Reporte no encontrado"}), 404
+
+    new_comment = Comment(
+        comment_text=comment_text,
+        author_id=db_user["id"],
+        reporte_id=reporte_id
+    )
+    db.session.add(new_comment)
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Comentario creado correctamente",
+        "comment": new_comment.serialize()
+    }), 201
+
+# obtener todos los comentarios de un reporte
+@api.route('/reportes/<int:reporte_id>/comentarios', methods=['GET'])
+def get_comments(reporte_id):
+    reporte = Reporte.query.get(reporte_id)
+    if not reporte:
+        return jsonify({"error": "Reporte no encontrado"}), 404
+
+    comments = Comment.query.filter_by(reporte_id=reporte_id).all()
+    return jsonify([comment.serialize() for comment in comments]), 200
+
+# Eliminar comentario (segun seas el propietario del reporte, el que lo puso, o el moderador)
+@api.route('/comentarios/<int:comment_id>', methods=['DELETE'])
+@jwt_required()
+def delete_comment(comment_id):
+    current = get_current_user()
+    claims = current["tokenClaims"]
+    db_user = current["database"]
+    requester_id = db_user["id"]
+    requester_role = db_user.get("role", "")
+
+    comment = Comment.query.get(comment_id)
+    if not comment:
+        return jsonify({"error": "Comentario no encontrado"}), 404
+
+    # Puede eliminarlo: el autor del comentario, el autor del reporte o un moderador
+    reporte = Reporte.query.get(comment.reporte_id)
+
+    if requester_id not in [comment.author_id, reporte.author_id] and requester_role != "moderador":
+        return jsonify({"error": "No autorizado para eliminar este comentario"}), 403
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return jsonify({"msg": "Comentario eliminado correctamente"}), 200
+
+# poner o quitar post de favoritos (o dar like)
+@api.route('/reportes/<int:reporte_id>/like', methods=['POST'])
+@jwt_required()
+def toggle_favorite(reporte_id):
+    current = get_current_user()
+    db_user = current["database"]
+    
+    existing_fav = Favorite.query.filter_by(user_id=db_user["id"], reporte_id=reporte_id).first()
+
+    if existing_fav:
+        db.session.delete(existing_fav)
+        db.session.commit()
+        return jsonify({"msg": "Eliminado de favoritos"}), 200
+
+    new_fav = Favorite(user_id=db_user["id"], reporte_id=reporte_id)
+    db.session.add(new_fav)
+    db.session.commit()
+    return jsonify({"msg": "Agregado a favoritos"}), 201
+
+# ver likes
+@api.route('/reportes/<int:reporte_id>/likes', methods=['GET'])
+def get_favorites(reporte_id):
+    count = Favorite.query.filter_by(reporte_id=reporte_id).count()
+    return jsonify({"reporte_id": reporte_id, "favorites": count}), 200
+
+# votar positivo a un reporte
+@api.route('/reportes/<int:reporte_id>/upvote', methods=['POST'])
+@jwt_required()
+def toggle_upvote(reporte_id):
+    current = get_current_user()
+    db_user = current["database"]
+
+    existing_vote = Vote.query.filter_by(user_id=db_user["id"], reporte_id=reporte_id).first()
+
+    if existing_vote:
+        if existing_vote.is_upvote:
+            db.session.delete(existing_vote)
+            db.session.commit()
+            return jsonify({"msg": "Upvote eliminado"}), 200
+        else:
+            existing_vote.is_upvote = True
+            db.session.commit()
+            return jsonify({"msg": "Cambiado a upvote"}), 200
+
+    new_vote = Vote(user_id=db_user["id"], reporte_id=reporte_id, is_upvote=True)
+    db.session.add(new_vote)
+    db.session.commit()
+    return jsonify({"msg": "Upvote agregado"}), 201
+
+# votar negativo a un reporte
+@api.route('/reportes/<int:reporte_id>/downvote', methods=['POST'])
+@jwt_required()
+def toggle_downvote(reporte_id):
+    current = get_current_user()
+    db_user = current["database"]
+
+    existing_vote = Vote.query.filter_by(user_id=db_user["id"], reporte_id=reporte_id).first()
+
+    if existing_vote:
+        if not existing_vote.is_upvote:
+            db.session.delete(existing_vote)
+            db.session.commit()
+            return jsonify({"msg": "Downvote eliminado"}), 200
+        else:
+            existing_vote.is_upvote = False
+            db.session.commit()
+            return jsonify({"msg": "Cambiado a downvote"}), 200
+
+    new_vote = Vote(user_id=db_user["id"], reporte_id=reporte_id, is_upvote=False)
+    db.session.add(new_vote)
+    db.session.commit()
+    return jsonify({"msg": "Downvote agregado"}), 201
+
+# ver votos positivos o negativos de un reporte
+@api.route('/reportes/<int:reporte_id>/votes', methods=['GET'])
+def get_votes(reporte_id):
+    upvotes = Vote.query.filter_by(reporte_id=reporte_id, is_upvote=True).count()
+    downvotes = Vote.query.filter_by(reporte_id=reporte_id, is_upvote=False).count()
+
+    return jsonify({
+        "reporte_id": reporte_id,
+        "upvotes": upvotes,
+        "downvotes": downvotes
+    }), 200
+
 # FIN ENDPOINTS MARTIN
 
 
