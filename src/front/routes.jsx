@@ -1,30 +1,113 @@
-// Import necessary components and functions from react-router-dom.
-
 import {
-    createBrowserRouter,
-    createRoutesFromElements,
-    Route,
+  createBrowserRouter,
+  createRoutesFromElements,
+  Route,
 } from "react-router-dom";
 import { Layout } from "./pages/Layout";
 import { Home } from "./pages/Home";
 import { Single } from "./pages/Single";
 import { Demo } from "./pages/Demo";
+import { Feed } from "./pages/Feed";
+import { FirebaseLogin } from "./pages/FirebaseLogin";
+import { FirebaseSignup } from "./pages/FirebaseSignup";
+import { PrivateRoute } from "./components/PrivateRoute";
+import { ResetPassword } from "./pages/ResetPassword";
+import { UserProfile } from "./pages/UserProfile";
+import { Perfil } from "./pages/Perfil";
+import { Moderador } from "./pages/Moderador";
+import { SubirReporte } from "./pages/SubirReporte";
+import { MisDatos } from "./pages/MisDatos";
+import { MisReportes } from "./pages/MisReportes";
+import { Favoritos } from "./pages/Favoritos";
+import { Reporte } from "./pages/Reporte";
+import { HomeModerador } from "./pages/HomeModerador";
+import { Denuncias } from "./pages/Denuncias";
+import { UsuariosSancionados } from "./pages/Sancionados";
+import { BuscadorModerador } from "./pages/BuscadorModerador";
+import { HomeAdmin } from "./pages/HomeAdmin";
+import { GestionarUsuarios } from "./pages/GestionarUsuarios";
+import { BuscadorAdmin } from "./pages/BuscadorAdmin";
+
 
 export const router = createBrowserRouter(
-    createRoutesFromElements(
-    // CreateRoutesFromElements function allows you to build route elements declaratively.
-    // Create your routes here, if you want to keep the Navbar and Footer in all views, add your new routes inside the containing Route.
-    // Root, on the contrary, create a sister Route, if you have doubts, try it!
-    // Note: keep in mind that errorElement will be the default page when you don't get a route, customize that page to make your project more attractive.
-    // Note: The child paths of the Layout element replace the Outlet component with the elements contained in the "element" attribute of these child paths.
+  createRoutesFromElements(
+    <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
+      
+   
+      <Route path="firebase-login" element={<FirebaseLogin />} />
+      <Route path="signup" element={<FirebaseSignup />} />
+      <Route path="reset-password" element={<ResetPassword />} />
+      <Route path="feed" element={<Feed />} />
+      <Route path="subir-reporte" element={<SubirReporte />} />
+      <Route path="mis-datos" element={<MisDatos />} />
+      <Route path="mis-reportes" element={<MisReportes />} />
+      <Route path="favoritos" element={<Favoritos />} />
+      <Route path="reporte" element={<Reporte />} />
+      <Route path="moderador" element={<HomeModerador />} />
+      <Route path="denuncias" element={<Denuncias />} />
+      <Route path="usuarios-sancionados" element={<UsuariosSancionados />} />
+      <Route path="buscador-moderador" element={<BuscadorModerador />} />
+      <Route path="homeadmin" element={<HomeAdmin />} />
+      <Route path="gestionar-usuarios" element={<GestionarUsuarios />} />
+      <Route path="buscador-admin" element={<BuscadorAdmin />} />
 
-      // Root Route: All navigation will start from here.
-      <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>} >
-
-        {/* Nested Routes: Defines sub-routes within the BaseHome component. */}
-        <Route path= "/" element={<Home />} />
-        <Route path="/single/:theId" element={ <Single />} />  {/* Dynamic route for single items */}
-        <Route path="/demo" element={<Demo />} />
-      </Route>
-    )
+      {/* <Route
+        index
+        element={
+          <PrivateRoute>
+            <Feed />
+          </PrivateRoute>
+        }
+      /> */}
+      <Route
+        path="single/:theId"
+        element={
+          <PrivateRoute>
+            <Single />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="demo"
+        element={
+          <PrivateRoute>
+            <Demo />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="profile"
+        element={
+          <PrivateRoute>
+            <UserProfile />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="home"
+        element={
+          <PrivateRoute>
+            <Home />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="perfil"
+        element={
+          <PrivateRoute>
+            <Perfil />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="moderador"
+        element={
+          <PrivateRoute>
+            <Moderador />
+          </PrivateRoute>
+        }
+      />
+    </Route>
+  )
 );
+
