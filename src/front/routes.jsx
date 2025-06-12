@@ -27,12 +27,13 @@ import { BuscadorModerador } from "./pages/BuscadorModerador";
 import { HomeAdmin } from "./pages/HomeAdmin";
 import { GestionarUsuarios } from "./pages/GestionarUsuarios";
 import { BuscadorAdmin } from "./pages/BuscadorAdmin";
-
+// import {RootRedirect} from "./components/RootRedirect";
+import { Loader } from "./components/Loader";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
-      
+      {/* <Route index element={<RootRedirect />} /> */}
    
       <Route path="firebase-login" element={<FirebaseLogin />} />
       <Route path="signup" element={<FirebaseSignup />} />
