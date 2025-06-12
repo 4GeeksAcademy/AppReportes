@@ -59,34 +59,32 @@ def decode_key_loader(jwt_headers, claims):
 
 @jwt_manager.user_lookup_loader
 def user_lookup_loader(jwt_headers, claims: dict):
-    print(claims)
     firebase_uid = claims.get("user_id")
     email = claims.get("email")
     fullname = claims.get("name")
-    profile_picture = claims.get("picture", None)  # Opcional, si lo devuelve Firebase
+    profile_picture = claims.get("picture", None)
 
-    # Buscar en la base de datos si ya existe el usuario
-    db_user = User.query.filter_by(user_id=firebase_uid).first()
+    # Buscar en la base de datos si ya existe el usuario por UID o por email
+    db_user = User.query.filter(
+        (User.user_id == firebase_uid) | (User.email == email)
+    ).first()
 
-    # Si no existe, lo creamos
     if not db_user:
         db_user = User(
             user_id=firebase_uid,
             email=email,
             fullname=fullname,
-            profile_picture=profile_picture
+            profile_picture=profile_picture,
+            is_moderator=False  # Por defecto no lo es
         )
         db.session.add(db_user)
         db.session.commit()
 
-    # Añadir a los claims el ID local de la base de datos
-    # Es decir, retorna el claims junto con la info de la propia base de datos de ese usuario (como el id) en una respuesta
     claims["id"] = db_user.id
-    # claims["fullname"] = db_user.fullname
-    # Para buscar info de usuario para cualquier cosa se busca con el get_current_user
+    claims["is_moderator"] = db_user.is_moderator  # 👈 lo añades al token si quieres
 
     return {
-        "database": db_user.serialize(),
+        "database": db_user.serialize(),  # Ya debería incluir is_moderator si está en el serialize
         "tokenClaims": claims
     }
 

@@ -27,6 +27,7 @@ python-jose = {extras = ["cryptography"], version = "*"}
 flask-cors = "*"
 cors = "*"
 flask-migrate = "*"
+faker = "*"
 
 [requires]
 python_version = "3.13"

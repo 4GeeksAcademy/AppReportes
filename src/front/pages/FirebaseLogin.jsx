@@ -44,6 +44,7 @@ export const FirebaseLogin = () => {
       console.log("Login con Google exitoso:", res);
 
       alert("✅ Login con Google exitoso");
+      res.user.is_moderator? navigate("/moderador"): 
       navigate("/home");
     } catch (error) {
       console.error("Error en Google login:", error.message);
