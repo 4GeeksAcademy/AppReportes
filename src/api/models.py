@@ -10,15 +10,21 @@ class User(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)  # Firebase UID
-    fullname: Mapped[str] = mapped_column(String(300), nullable=True)
+    fullname: Mapped[str] = mapped_column(String(300), nullable=False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
-    profile_picture: Mapped[str] = mapped_column(String(300), nullable=True)
+    profile_picture: Mapped[str] = mapped_column(String(300), nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True)
+    is_moderator: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    reportes: Mapped[List["Reporte"]] = relationship("Reporte", back_populates="author")
-    comments: Mapped[List["Comment"]] = relationship("Comment", back_populates="author")
-    favorites: Mapped[List["Favorite"]] = relationship("Favorite", back_populates="user")
-    votes: Mapped[List["Vote"]] = relationship("Vote", back_populates="user")
+    reportes: Mapped[List["Reporte"]] = relationship("Reporte", back_populates="author", cascade="all, delete-orphan")
+    comments: Mapped[List["Comment"]] = relationship("Comment", back_populates="author", cascade="all, delete-orphan")
+    favorites: Mapped[List["Favorite"]] = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
+    votes: Mapped[List["Vote"]] = relationship("Vote", back_populates="user", cascade="all, delete-orphan")
+
+    # Relaciones con denuncias y sanciones
+    denuncias_realizadas = relationship("Denuncia", foreign_keys="[Denuncia.denunciante_id]", back_populates="denunciante")
+    denuncias_recibidas = relationship("Denuncia", foreign_keys="[Denuncia.denunciado_id]", back_populates="denunciado")
+    sanciones = relationship("Sancion", back_populates="user", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
@@ -27,46 +33,52 @@ class User(db.Model):
             "firebase_uid": self.user_id,
             "email": self.email,
             "propile_picture": self.profile_picture,
-            "isActive": self.is_active
+            "isActive": self.is_active,
+            "is_moderator": self.is_moderator
         }
-    
+
 class Reporte(db.Model):
     __tablename__ = "reportes"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     text: Mapped[str] = mapped_column(String(200), nullable=False)
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+
     author: Mapped["User"] = relationship("User", back_populates="reportes")
-    images: Mapped[List["Media"]] = relationship("Media", back_populates="reporte")
-    comments: Mapped[List["Comment"]] = relationship("Comment", back_populates="reporte")
-    favorites: Mapped[List["Favorite"]] = relationship("Favorite", back_populates="reporte")
-    votes: Mapped[List["Vote"]] = relationship("Vote", back_populates="reporte")
+    images: Mapped[List["Media"]] = relationship("Media", back_populates="reporte", cascade="all, delete-orphan")
+    comments: Mapped[List["Comment"]] = relationship("Comment", back_populates="reporte", cascade="all, delete-orphan")
+    favorites: Mapped[List["Favorite"]] = relationship("Favorite", back_populates="reporte", cascade="all, delete-orphan")
+    votes: Mapped[List["Vote"]] = relationship("Vote", back_populates="reporte", cascade="all, delete-orphan")
 
     def serialize(self):
         return {
-                "id": self.id, 
-                "text": self.text, 
-                "author_id": self.author_id
-                }
-
+            "id": self.id,
+            "text": self.text,
+            "author_id": self.author_id,
+            "author": self.author.serialize() if self.author else None,
+            "images": [image.serialize() for image in self.images],
+            "comments": [comment.serialize() for comment in self.comments],
+            "favorites_count": len(self.favorites),
+            "votes": [{"user_id": vote.user_id, "is_upvote": vote.is_upvote} for vote in self.votes]
+        }
 
 class Media(db.Model):
     __tablename__ = "media"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    type: Mapped[enumerate] = mapped_column(String(20), default="image")
-    image: Mapped[enumerate] = mapped_column(String(20), default="image")
+    type: Mapped[str] = mapped_column(String(20), default="image")
+    image: Mapped[str] = mapped_column(String(500), nullable=True)
     reporte_id: Mapped[int] = mapped_column(ForeignKey("reportes.id"), nullable=False)
 
     reporte: Mapped["Reporte"] = relationship("Reporte", back_populates="images")
 
     def serialize(self):
         return {
-                "id": self.id, 
-                "type": self.type, 
-                "image": self.image
-                }
-
+            "id": self.id,
+            "reporte_id": self.reporte_id,
+            "type": self.type,
+            "image": self.image
+        }
 
 class Comment(db.Model):
     __tablename__ = "comments"
@@ -81,10 +93,9 @@ class Comment(db.Model):
 
     def serialize(self):
         return {
-                "id": self.id, 
-                "comment_text": self.comment_text
-                }
-
+            "id": self.id,
+            "comment_text": self.comment_text
+        }
 
 class Favorite(db.Model):
     __tablename__ = "favorites"
@@ -95,7 +106,6 @@ class Favorite(db.Model):
 
     user: Mapped["User"] = relationship("User", back_populates="favorites")
     reporte: Mapped["Reporte"] = relationship("Reporte", back_populates="favorites")
-
 
 class Vote(db.Model):
     __tablename__ = "votes"
@@ -108,3 +118,57 @@ class Vote(db.Model):
     user: Mapped["User"] = relationship("User", back_populates="votes")
     reporte: Mapped["Reporte"] = relationship("Reporte", back_populates="votes")
 
+class Denuncia(db.Model):
+    __tablename__ = "denuncias"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    denunciante_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    denunciado_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+
+    reporte_id: Mapped[int] = mapped_column(ForeignKey("reportes.id"), nullable=True)
+    comment_id: Mapped[int] = mapped_column(ForeignKey("comments.id"), nullable=True)
+
+    motivo: Mapped[str] = mapped_column(Text, nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="pendiente")  # pendiente, revisado, descartado
+    created_at = mapped_column(db.DateTime, server_default=db.func.now())
+
+    denunciante = relationship("User", foreign_keys=[denunciante_id], back_populates="denuncias_realizadas")
+    denunciado = relationship("User", foreign_keys=[denunciado_id], back_populates="denuncias_recibidas")
+
+    reporte = relationship("Reporte")
+    comment = relationship("Comment")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "denunciante_id": self.denunciante_id,
+            "denunciado_id": self.denunciado_id,
+            "reporte_id": self.reporte_id,
+            "comment_id": self.comment_id,
+            "motivo": self.motivo,
+            "status": self.status,
+            "created_at": self.created_at.isoformat()
+        }
+
+class Sancion(db.Model):
+    __tablename__ = "sanciones"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    motivo: Mapped[str] = mapped_column(Text, nullable=False)
+    tipo: Mapped[str] = mapped_column(String(20), nullable=False)  # ejemplo: "bloqueo", "advertencia"
+    fecha_inicio = mapped_column(db.DateTime, server_default=db.func.now())
+    fecha_fin = mapped_column(db.DateTime, nullable=True)
+
+    user = relationship("User", back_populates="sanciones")
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "motivo": self.motivo,
+            "tipo": self.tipo,
+            "fecha_inicio": self.fecha_inicio.isoformat(),
+            "fecha_fin": self.fecha_fin.isoformat() if self.fecha_fin else None
+        }

@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User
+from api.models import db, User, Reporte, Media, Comment, Favorite, Vote, Denuncia, Sancion
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -11,8 +11,9 @@ from flask_jwt_extended import (
     get_jwt_identity, get_jwt, current_user, get_current_user
 )
 from api.firebase_auth import firebase_required
-from api.firebase_admin_init import firebase_admin, auth as firebase_auth
-
+from api.firebase_admin_init import firebase_auth
+from firebase_admin import auth
+from datetime import datetime
 
 api = Blueprint('api', __name__)
 
@@ -22,41 +23,6 @@ bcrypt = Bcrypt(app)
 # Allow CORS requests to this API
 CORS(api)
 CORS(app)
-
-# @api.route("/register", methods=["POST"])
-# def register_user():
-#     auth_header = request.headers.get("Authorization", "")
-#     token = auth_header.replace("Bearer ", "")
-
-#     if not token:
-#         return jsonify({"error": "Token no enviado"}), 401
-
-#     try:
-#         # Verifica el token
-#         decoded_token = auth.verify_id_token(token)
-#         firebase_uid = decoded_token["uid"]
-#         email = decoded_token["email"]
-#         nombre = decoded_token.get("name", "")
-#         picture = decoded_token.get("picture", "")
-
-#         # Verifica si el usuario ya existe
-#         user = User.query.filter_by(firebase_uid=firebase_uid).first()
-#         if not user:
-#             # Crea el usuario en tu base de datos
-#             user = User(
-#                 firebase_uid=firebase_uid,
-#                 email=email,
-#                 nombre=nombre,
-#                 foto_url=picture,
-#             )
-#             db.session.add(user)
-#             db.session.commit()
-
-#         return jsonify(user.serialize()), 200
-
-#     except Exception as e:
-#         print("❌ Error verificando el token:", e)
-#         return jsonify({"error": "Token inválido o verificación fallida"}), 401
 
 # @api.route("/admin", methods=["GET"])
 # @jwt_required()
@@ -111,72 +77,676 @@ def handle_hello_protected():
     return jsonify(response_body), 200
 
 
+## ENDPOINTS MARTIN
+
+# para designar moderadores
+@api.route("/make-moderator", methods=["POST"])
+def make_moderator():
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"error": "Email requerido"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    user.is_moderator = True
+    db.session.commit()
+
+    return jsonify({"msg": f"El usuario {email} ahora es moderador"}), 200
+
+#obtener todos los usuarios (solo moderadores)
+@api.route("/users", methods=["GET"])
+@jwt_required()
+def list_users():
+    current = get_current_user()
+    db_user = current["database"]
+
+    is_moderator = db_user.get("is_moderator", False)
+
+    if not is_moderator:
+        return jsonify({"error": "No autorizado"}), 403
+
+    users = User.query.all()
+    user_list = [user.serialize() for user in users]
+    
+    return jsonify(user_list), 200
+
+#obtener usuario en concreto (moderadores incluidos)
+@api.route("/user/<int:id>", methods=["GET"])
+@jwt_required()
+def get_user(id):
+    current = get_current_user()
+    claims = current["tokenClaims"]
+    db_user = current["database"]
+
+    requester_id = claims.get("id")
+    is_moderator = db_user.get("is_moderator", False)
+
+    # Verifica si el usuario puede acceder a este recurso
+    if requester_id != id and not is_moderator:
+        return jsonify({"error": "No autorizado"}), 403
+
+    user = User.query.get(id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    return jsonify(user.serialize()), 200
+
+#borrar usuario (moderadores incluidos)
+@api.route("/user/<int:id>", methods=["DELETE"])
+@jwt_required()
+def delete_user(id):
+    current = get_current_user()
+    db_user = current["database"]
+    claims = current["tokenClaims"]
+
+    requester_id = db_user["id"]
+    is_moderator = db_user.get("is_moderator", False)
+
+    # 1. Buscar el usuario objetivo en la base de datos
+    user = User.query.get(id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    # 2. Verificar autorización
+    if requester_id != id and not is_moderator:
+        return jsonify({"error": "No autorizado para eliminar este usuario"}), 403
+
+    # 3. Eliminar de Firebase Authentication (ahora también si eres moderador)
+    try:
+        auth.delete_user(user.user_id)  # Eliminamos usando el Firebase UID del usuario objetivo
+    except Exception as e:
+        return jsonify({"error": f"Error al eliminar en Firebase: {str(e)}"}), 500
+
+    # 4. Eliminar de la base de datos
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({"msg": "Usuario eliminado correctamente"}), 200
+
+# editar datos de usuario (moderadores incluidos, comprobar)
+@api.route("/user/<int:id>", methods=["PUT"])
+@jwt_required()
+def update_user(id):
+    current = get_current_user()
+    db_user = current["database"]
+
+    requester_id = db_user["id"]
+    is_moderator = db_user.get("is_moderator", False)
+
+    # Solo puede editar su perfil o ser moderador
+    if requester_id != id and not is_moderator:
+        return jsonify({"error": "No autorizado"}), 403
+
+    user = User.query.get(id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    data = request.get_json()
+
+    # Solo permitimos actualizar ciertos campos
+    allowed_fields = ["fullname", "profile_picture"]
+    for field in allowed_fields:
+        if field in data:
+            setattr(user, field, data[field])
+
+    db.session.commit()
+
+    return jsonify({"msg": "Perfil actualizado correctamente", "user": user.serialize()}), 200
+
+# un usuario crea un reporte (tiene que estar logueado, pero no hay que poner id por esta misma razon)
+@api.route('/reportes', methods=['POST'])
+@jwt_required()
+def create_reporte():
+    data = request.get_json()
+    if not data or "text" not in data:
+        return jsonify({"error": "Falta el campo 'text'"}), 400
+    current = get_current_user()
+    claims = current["tokenClaims"]
+    author_id = claims.get("id")
+
+    # Crear el reporte
+    new_reporte = Reporte(
+        text=data["text"],
+        author_id=author_id
+    )
+    db.session.add(new_reporte)
+    db.session.flush()  # Para obtener el ID del reporte antes de commit
+
+    # Si se incluye imagen, se guarda como Media
+    if "image" in data and data["image"]:
+        new_media = Media(
+            image=data["image"],
+            reporte_id=new_reporte.id
+        )
+        db.session.add(new_media)
+
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Reporte creado correctamente",
+        "reporte": new_reporte.serialize()
+    }), 201
+
+# obtener todos los reportes
+@api.route('/reportes', methods=['GET'])
+def get_reports():
+    reportes = Reporte.query.all()
+    return jsonify([reporte.serialize() for reporte in reportes]), 200
+
+# obtener todos los reportes de un usuario
+@api.route('/users/<int:user_id>/reportes', methods=['GET'])
+def get_reports_by_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    # Obtenemos todos los reportes del usuario
+    reports = Reporte.query.filter_by(author_id=user_id).all()
+
+    return jsonify({
+        "user": user.serialize(),
+        "reports": [report.serialize() for report in reports]
+    }), 200
+
+# obtener un reporte concreto de un solo usuario
+@api.route('/reportes/<int:id>', methods=['GET'])
+def get_report_by_id(id):
+    reporte = Reporte.query.get(id)
+
+    if not reporte:
+        return jsonify({"msg": "Reporte no encontrado"}), 404
+
+    return jsonify(reporte.serialize()), 200
+
+# para que un usuario pueda editar su reporte
+@api.route('/users/<int:user_id>/reportes/<int:report_id>', methods=['PUT'])
+@jwt_required()
+def update_report(user_id, report_id):
+    current = get_current_user()
+    claims = current["tokenClaims"]
+    db_user = current["database"]
+    requester_id = claims.get("id")
+
+    # Solo puede editar su propio reporte
+    if requester_id != user_id:
+        return jsonify({"error": "No autorizado para editar este reporte"}), 403
+
+    report = Reporte.query.filter_by(id=report_id, author_id=user_id).first()
+    if not report:
+        return jsonify({"error": "Reporte no encontrado o no pertenece al usuario"}), 404
+
+    data = request.get_json()
+
+    # Solo permitimos actualizar ciertos campos
+    allowed_fields = ["text"]
+    for field in allowed_fields:
+        if field in data:
+            setattr(report, field, data[field])
+
+    # Si se actualizan imágenes
+    if "images" in data:
+        # Borrar imágenes antiguas
+        for img in report.images:
+            db.session.delete(img)
+        db.session.commit()
+
+        # Agregar nuevas imágenes
+        for image_url in data["images"]:
+            new_media = Media(type="image", image=image_url, reporte_id=report.id)
+            db.session.add(new_media)
+
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Reporte actualizado correctamente",
+        "reporte": report.serialize()
+    }), 200
+
+# para que un usuario elimine su reporte (moderadores incluidos, comprobar)
+@api.route('/reportes/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_reporte(id):
+    current_user = get_current_user()
+    db_user = current_user["database"]
+
+    is_moderator = db_user.get("is_moderator", False)
+
+    reporte = Reporte.query.get(id)
+
+    if not reporte:
+        return jsonify({"msg": "Reporte no encontrado"}), 404
+
+    # Permitir si es autor o moderador
+    if reporte.author_id != db_user["id"] and not is_moderator:
+        return jsonify({"msg": "No tienes permiso para eliminar este reporte"}), 403
+
+    db.session.delete(reporte)
+    db.session.commit()
+
+    return jsonify({"msg": "Reporte eliminado correctamente"}), 200
+
+# crear un comentario en un reporte
+@api.route('/reportes/<int:reporte_id>/comentarios', methods=['POST'])
+@jwt_required()
+def create_comment(reporte_id):
+    current = get_current_user()
+    claims = current["tokenClaims"]
+    db_user = current["database"]
+
+    data = request.get_json()
+    comment_text = data.get("comment_text", "").strip()
+
+    if not comment_text:
+        return jsonify({"error": "El comentario no puede estar vacío"}), 400
+
+    # Verificamos que el reporte exista
+    reporte = Reporte.query.get(reporte_id)
+    if not reporte:
+        return jsonify({"error": "Reporte no encontrado"}), 404
+
+    new_comment = Comment(
+        comment_text=comment_text,
+        author_id=db_user["id"],
+        reporte_id=reporte_id
+    )
+    db.session.add(new_comment)
+    db.session.commit()
+
+    return jsonify({
+        "msg": "Comentario creado correctamente",
+        "comment": new_comment.serialize()
+    }), 201
+
+# obtener todos los comentarios de un reporte
+@api.route('/reportes/<int:reporte_id>/comentarios', methods=['GET'])
+def get_comments(reporte_id):
+    reporte = Reporte.query.get(reporte_id)
+    if not reporte:
+        return jsonify({"error": "Reporte no encontrado"}), 404
+
+    comments = Comment.query.filter_by(reporte_id=reporte_id).all()
+    return jsonify([comment.serialize() for comment in comments]), 200
+
+# Eliminar comentario (segun seas el propietario del reporte, el que lo puso, o el moderador) (moderadores incluidos, comprobar)
+@api.route('/comentarios/<int:comment_id>', methods=['DELETE'])
+@jwt_required()
+def delete_comment(comment_id):
+    current = get_current_user()
+    db_user = current["database"]
+    requester_id = db_user["id"]
+    is_moderator = db_user.get("is_moderator", False)
+
+    comment = Comment.query.get(comment_id)
+    if not comment:
+        return jsonify({"error": "Comentario no encontrado"}), 404
+
+    # Puede eliminarlo: autor del comentario, autor del reporte o moderador
+    reporte = Reporte.query.get(comment.reporte_id)
+
+    if requester_id not in [comment.author_id, reporte.author_id] and not is_moderator:
+        return jsonify({"error": "No autorizado para eliminar este comentario"}), 403
+
+    db.session.delete(comment)
+    db.session.commit()
+
+    return jsonify({"msg": "Comentario eliminado correctamente"}), 200
+
+# poner o quitar post de favoritos (o dar like)
+@api.route('/reportes/<int:reporte_id>/like', methods=['POST'])
+@jwt_required()
+def toggle_favorite(reporte_id):
+    current = get_current_user()
+    db_user = current["database"]
+    
+    existing_fav = Favorite.query.filter_by(user_id=db_user["id"], reporte_id=reporte_id).first()
+
+    if existing_fav:
+        db.session.delete(existing_fav)
+        db.session.commit()
+        return jsonify({"msg": "Eliminado de favoritos"}), 200
+
+    new_fav = Favorite(user_id=db_user["id"], reporte_id=reporte_id)
+    db.session.add(new_fav)
+    db.session.commit()
+    return jsonify({"msg": "Agregado a favoritos"}), 201
+
+# ver likes
+@api.route('/reportes/<int:reporte_id>/likes', methods=['GET'])
+def get_favorites(reporte_id):
+    count = Favorite.query.filter_by(reporte_id=reporte_id).count()
+    return jsonify({"reporte_id": reporte_id, "favorites": count}), 200
+
+# votar positivo a un reporte
+@api.route('/reportes/<int:reporte_id>/upvote', methods=['POST'])
+@jwt_required()
+def toggle_upvote(reporte_id):
+    current = get_current_user()
+    db_user = current["database"]
+
+    existing_vote = Vote.query.filter_by(user_id=db_user["id"], reporte_id=reporte_id).first()
+
+    if existing_vote:
+        if existing_vote.is_upvote:
+            db.session.delete(existing_vote)
+            db.session.commit()
+            return jsonify({"msg": "Upvote eliminado"}), 200
+        else:
+            existing_vote.is_upvote = True
+            db.session.commit()
+            return jsonify({"msg": "Cambiado a upvote"}), 200
+
+    new_vote = Vote(user_id=db_user["id"], reporte_id=reporte_id, is_upvote=True)
+    db.session.add(new_vote)
+    db.session.commit()
+    return jsonify({"msg": "Upvote agregado"}), 201
+
+# votar negativo a un reporte
+@api.route('/reportes/<int:reporte_id>/downvote', methods=['POST'])
+@jwt_required()
+def toggle_downvote(reporte_id):
+    current = get_current_user()
+    db_user = current["database"]
+
+    existing_vote = Vote.query.filter_by(user_id=db_user["id"], reporte_id=reporte_id).first()
+
+    if existing_vote:
+        if not existing_vote.is_upvote:
+            db.session.delete(existing_vote)
+            db.session.commit()
+            return jsonify({"msg": "Downvote eliminado"}), 200
+        else:
+            existing_vote.is_upvote = False
+            db.session.commit()
+            return jsonify({"msg": "Cambiado a downvote"}), 200
+
+    new_vote = Vote(user_id=db_user["id"], reporte_id=reporte_id, is_upvote=False)
+    db.session.add(new_vote)
+    db.session.commit()
+    return jsonify({"msg": "Downvote agregado"}), 201
+
+# ver votos positivos o negativos de un reporte
+@api.route('/reportes/<int:reporte_id>/votes', methods=['GET'])
+def get_votes(reporte_id):
+    upvotes = Vote.query.filter_by(reporte_id=reporte_id, is_upvote=True).count()
+    downvotes = Vote.query.filter_by(reporte_id=reporte_id, is_upvote=False).count()
+
+    return jsonify({
+        "reporte_id": reporte_id,
+        "upvotes": upvotes,
+        "downvotes": downvotes
+    }), 200
+
+# banear usuarios (solo moderadores, comprobar)
+
+@api.route("/user/<int:id>/ban", methods=["PUT"])
+@jwt_required()
+def ban_user(id):
+    current = get_current_user()
+    db_user = current["database"]
+
+    # Verificar si es moderador
+    if not db_user.get("is_moderator", False):
+        return jsonify({"error": "No autorizado: solo moderadores pueden banear usuarios"}), 403
+
+    user = User.query.get(id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    data = request.get_json()
+    is_active = data.get("is_active")
+
+    if is_active is None:
+        return jsonify({"error": "Debes proporcionar el campo 'is_active' en el cuerpo de la petición"}), 400
+
+    # Evitar que un moderador se banee a sí mismo accidentalmente
+    if db_user["id"] == id:
+        return jsonify({"error": "No puedes modificar tu propio estado de actividad"}), 403
+
+    user.is_active = is_active
+    db.session.commit()
+
+    estado = "activado" if is_active else "baneado"
+    return jsonify({"msg": f"Usuario {estado} correctamente", "user": user.serialize()}), 200
+
+# faltan por comprobar:
+
+# postear una denuncia (usuario)
+@api.route('/denuncias', methods=['POST'])
+@jwt_required()
+def create_denuncia():
+    current = get_current_user()
+    db_user = current["database"]
+
+    data = request.get_json()
+    motivo = data.get("motivo")
+    reporte_id = data.get("reporte_id")
+    comment_id = data.get("comment_id")
+
+    # Validación básica
+    if not motivo:
+        return jsonify({"error": "El motivo es obligatorio"}), 400
+
+    # Debe denunciar un reporte o un comentario, no ambos a la vez
+    if (not reporte_id and not comment_id) or (reporte_id and comment_id):
+        return jsonify({"error": "Debes especificar un reporte o un comentario, pero no ambos"}), 400
+
+    # Verificar que el reporte o comentario exista
+    if reporte_id and not Reporte.query.get(reporte_id):
+        return jsonify({"error": "Reporte no encontrado"}), 404
+    if comment_id and not Comment.query.get(comment_id):
+        return jsonify({"error": "Comentario no encontrado"}), 404
+
+    denuncia = Denuncia(
+        reporter_id=db_user["id"],
+        reporte_id=reporte_id,
+        comment_id=comment_id,
+        motivo=motivo,
+        status="pendiente",
+    )
+
+    db.session.add(denuncia)
+    db.session.commit()
+
+    return jsonify({"msg": "Denuncia creada", "denuncia": denuncia.serialize()}), 201
+
+# obtener todas las denuncias (moderadores solo)
+@api.route('/denuncias', methods=['GET'])
+@jwt_required()
+def list_denuncias():
+    current = get_current_user()
+    db_user = current["database"]
+
+    if not db_user.get("is_moderator", False):
+        return jsonify({"error": "No autorizado"}), 403
+
+    denuncias = Denuncia.query.all()
+    return jsonify([d.serialize() for d in denuncias]), 200
+
+# obtener una denuncia en concreto (moderadores solo)
+@api.route('/denuncias/<int:id>', methods=['GET'])
+@jwt_required()
+def get_denuncia(id):
+    current = get_current_user()
+    db_user = current["database"]
+
+    if not db_user.get("is_moderator", False):
+        return jsonify({"error": "No autorizado"}), 403
+
+    denuncia = Denuncia.query.get(id)
+    if not denuncia:
+        return jsonify({"error": "Denuncia no encontrada"}), 404
+
+    return jsonify(denuncia.serialize()), 200
+
+# para cambiar el estado (moderadores solo)
+@api.route('/denuncias/<int:id>', methods=['PUT'])
+@jwt_required()
+def update_denuncia(id):
+    current = get_current_user()
+    db_user = current["database"]
+
+    if not db_user.get("is_moderator", False):
+        return jsonify({"error": "No autorizado"}), 403
+
+    denuncia = Denuncia.query.get(id)
+    if not denuncia:
+        return jsonify({"error": "Denuncia no encontrada"}), 404
+
+    data = request.get_json()
+    status = data.get("status")
+
+    if status not in ["pendiente", "revisado", "descartado"]:
+        return jsonify({"error": "Estado inválido"}), 400
+
+    denuncia.status = status
+    db.session.commit()
+
+    return jsonify({"msg": "Denuncia actualizada", "denuncia": denuncia.serialize()}), 200
+
+# delete denuncua (moderadores solo)
+@api.route('/denuncias/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_denuncia(id):
+    current = get_current_user()
+    db_user = current["database"]
+
+    if not db_user.get("is_moderator", False):
+        return jsonify({"error": "No autorizado"}), 403
+
+    denuncia = Denuncia.query.get(id)
+    if not denuncia:
+        return jsonify({"error": "Denuncia no encontrada"}), 404
+
+    db.session.delete(denuncia)
+    db.session.commit()
+
+    return jsonify({"msg": "Denuncia eliminada"}), 200
+
+# crear sancion (solo moderadores)
+@api.route('/sanciones', methods=['POST'])
+@jwt_required()
+def create_sancion():
+    current = get_current_user()
+    db_user = current["database"]
+
+    if not db_user.get("is_moderator", False):
+        return jsonify({"error": "No autorizado"}), 403
+
+    data = request.get_json()
+    user_id = data.get("user_id")
+    motivo = data.get("motivo")
+    tipo = data.get("tipo")
+    fecha_fin_str = data.get("fecha_fin")  # opcional
+
+    if not user_id or not motivo or not tipo:
+        return jsonify({"error": "user_id, motivo y tipo son obligatorios"}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    fecha_fin = None
+    if fecha_fin_str:
+        try:
+            fecha_fin = datetime.fromisoformat(fecha_fin_str)
+        except ValueError:
+            return jsonify({"error": "fecha_fin debe ser ISO 8601"}), 400
+
+    sancion = Sancion(
+        user_id=user_id,
+        motivo=motivo,
+        tipo=tipo,
+        fecha_fin=fecha_fin
+    )
+
+    db.session.add(sancion)
+    db.session.commit()
+
+    return jsonify({"msg": "Sanción creada", "sancion": sancion.serialize()}), 201
+
+# listar sanciones (solo moderadores)
+@api.route('/sanciones', methods=['GET'])
+@jwt_required()
+def list_sanciones():
+    current = get_current_user()
+    db_user = current["database"]
+
+    if not db_user.get("is_moderator", False):
+        return jsonify({"error": "No autorizado"}), 403
+
+    sanciones = Sancion.query.all()
+    return jsonify([s.serialize() for s in sanciones]), 200
+
+# ver sancion concreta (solo moderadores)
+@api.route('/sanciones/<int:id>', methods=['GET'])
+@jwt_required()
+def get_sancion(id):
+    current = get_current_user()
+    db_user = current["database"]
+
+    if not db_user.get("is_moderator", False):
+        return jsonify({"error": "No autorizado"}), 403
+
+    sancion = Sancion.query.get(id)
+    if not sancion:
+        return jsonify({"error": "Sanción no encontrada"}), 404
+
+    return jsonify(sancion.serialize()), 200
+
+# actualizar sancion manualmente (solo moderadores)
+@api.route('/sanciones/<int:id>', methods=['PUT'])
+@jwt_required()
+def update_sancion(id):
+    current = get_current_user()
+    db_user = current["database"]
+
+    if not db_user.get("is_moderator", False):
+        return jsonify({"error": "No autorizado"}), 403
+
+    sancion = Sancion.query.get(id)
+    if not sancion:
+        return jsonify({"error": "Sanción no encontrada"}), 404
+
+    data = request.get_json()
+
+    # Permitimos actualizar motivo, tipo y fecha_fin
+    if "motivo" in data:
+        sancion.motivo = data["motivo"]
+    if "tipo" in data:
+        sancion.tipo = data["tipo"]
+    if "fecha_fin" in data:
+        try:
+            sancion.fecha_fin = datetime.fromisoformat(data["fecha_fin"])
+        except ValueError:
+            return jsonify({"error": "fecha_fin debe ser ISO 8601"}), 400
+
+    db.session.commit()
+
+    return jsonify({"msg": "Sanción actualizada", "sancion": sancion.serialize()}), 200
+
+# eliminar sancion (solo moderadores)
+@api.route('/sanciones/<int:id>', methods=['DELETE'])
+@jwt_required()
+def delete_sancion(id):
+    current = get_current_user()
+    db_user = current["database"]
+
+    if not db_user.get("is_moderator", False):
+        return jsonify({"error": "No autorizado"}), 403
+
+    sancion = Sancion.query.get(id)
+    if not sancion:
+        return jsonify({"error": "Sanción no encontrada"}), 404
+
+    db.session.delete(sancion)
+    db.session.commit()
+
+    return jsonify({"msg": "Sanción eliminada"}), 200
 
 
+# FIN ENDPOINTS MARTIN
 
-
-
-
-
-# @api.route('/users', methods=['GET'])
-# def get_users():
-#     users = User.query.all()
-#     return jsonify([
-#         {
-#             "id": user.id,
-#             "email": user.email
-#         } for user in users
-#     ]), 200
-
-# @api.route('/user/<int:user_id>/content', methods=['GET'])
-# def get_user_content(user_id):
-#     user = User.query.get(user_id)
-#     if not user:
-#         return jsonify({"error": "Usuario no encontrado"}), 404
-
-#     result = []
-#     for photo in user.photos:
-#         result.append({
-#             "photo_id": photo.id,
-#             "url": photo.url,
-#             "comments": [
-#                 {
-#                     "id": comment.id,
-#                     "content": comment.content
-#                 } for comment in photo.comments
-#             ]
-#         })
-
-#     return jsonify(result), 200
-
-# @api.route('/photo/<int:photo_id>', methods=['DELETE'])
-# def delete_photo(photo_id):
-#     from api.models import Photo
-#     photo = Photo.query.get(photo_id)
-#     if not photo:
-#         return jsonify({"error": "Foto no encontrada"}), 404
-#     db.session.delete(photo)
-#     db.session.commit()
-#     return jsonify({"message": "Foto y comentarios eliminados"}), 200
-
-
-# @api.route('/comment/<int:comment_id>', methods=['DELETE'])
-# def delete_comment(comment_id):
-#     from api.models import Comment
-#     comment = Comment.query.get(comment_id)
-#     if not comment:
-#         return jsonify({"error": "Comentario no encontrado"}), 404
-#     db.session.delete(comment)
-#     db.session.commit()
-#     return jsonify({"message": "Comentario eliminado"}), 200
-
-# @api.route('/comment/<int:comment_id>', methods=['PUT'])
-# def edit_comment(comment_id):
-#     from api.models import Comment
-#     data = request.get_json()
-#     comment = Comment.query.get(comment_id)
-#     if not comment:
-#         return jsonify({"error": "Comentario no encontrado"}), 404
-#     comment.content = data.get("content", comment.content)
-#     db.session.commit()
-#     return jsonify({"message": "Comentario actualizado"}), 200

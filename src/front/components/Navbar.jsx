@@ -1,50 +1,154 @@
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // 👈 Usamos el contexto
+import { useAuth } from "../context/AuthContext";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebaseAuth";
+import logo from "../assets/img/beacon-sinfondo.png";
 
 export const Navbar = () => {
-	const navigate = useNavigate();
-	const { user } = useAuth(); // 👈 Obtenemos el usuario del contexto
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const navRef = useRef(null);
 
-	const handleLogout = async () => {
-		try {
-			await signOut(auth);
-			navigate("/firebase-login");
-		} catch (error) {
-			console.error("Error al cerrar sesión:", error.message);
-		}
-	};
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setMenuOpen(false);
+      navigate("/firebase-login");
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error.message);
+    }
+  };
 
-	return (
-		<nav className="navbar navbar-light bg-light">
-			<div className="container">
-				<Link to="/feed">
-					<span className="navbar-brand mb-0 h1">Fixify</span>
-				</Link>
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        menuOpen &&
+        menuRef.current &&
+        !menuRef.current.contains(event.target) &&
+        navRef.current &&
+        !navRef.current.contains(event.target)
+      ) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
 
-				<div className="ml-auto d-flex align-items-center gap-2">
-					<Link to="/home">
-						<button className="btn btn-outline-primary">Home</button>
-					</Link>
+  return (
+    <div style={{ position: "relative" }}>
+      <nav
+        ref={navRef}
+        className="navbar navbar-dark bg-dark rounded-5 m-2 px-3 py-2 position-relative"
+      >
+        <div className="container-fluid d-flex justify-content-between align-items-center w-100">
+          <button
+            className="btn btn-outline-light"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
+          >
+            ☰
+          </button>
 
-					{user ? (
-						<>
-							<span className="me-2">👋 {user.displayName || user.email}</span> {/* Nombre o email */}
-							<Link to="/profile">
-								<button className="btn btn-outline-secondary">Mi Perfil</button>
-							</Link>
-							<button className="btn btn-danger" onClick={handleLogout}>
-								Cerrar sesión
-							</button>
-						</>
-					) : (
-						<Link to="/firebase-login">
-							<button className="btn btn-outline-primary">Iniciar sesión</button>
-						</Link>
-					)}
-				</div>
-			</div>
-		</nav>
-	);
+          {(!menuOpen || user) && (
+            <Link
+              to="/feed"
+              className="position-absolute top-50 start-50 translate-middle"
+              aria-label="Ir al feed"
+            >
+              <img src={logo} alt="Logo" style={{ height: "40px" }} />
+            </Link>
+          )}
+
+          {menuOpen && !user && (
+            <div className="d-flex gap-2 mx-auto">
+              <Link to="/signup" onClick={() => setMenuOpen(false)}>
+                <button className="btn btn-outline-light">Sign Up</button>
+              </Link>
+              <Link to="/firebase-login" onClick={() => setMenuOpen(false)}>
+                <button className="btn btn-outline-light">Log In</button>
+              </Link>
+            </div>
+          )}
+
+          <button
+            onClick={() => navigate("/subir-reporte")}
+            title="Subir reporte"
+            style={{
+              border: "1px solid white",
+              borderRadius: "50%",
+              background: "transparent",
+              color: "lightgrey",
+              width: "38px",
+              height: "38px",
+              fontSize: "24px",
+              lineHeight: "38px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              cursor: "pointer",
+              userSelect: "none",
+            }}
+            aria-label="Subir reporte"
+          >
+            +
+          </button>
+        </div>
+      </nav>
+
+      {menuOpen && user && (
+        <div
+          ref={menuRef}
+          className="bg-dark rounded-3 shadow position-absolute"
+          style={{
+            top: "calc(100% + 10px)",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "calc(100% - 32px)",
+            maxWidth: "1200px",
+            zIndex: 1050,
+            padding: "1rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.1rem",
+            color: "white",
+          }}
+        >
+          <Link
+            to="/mis-reportes"
+            onClick={() => setMenuOpen(false)}
+            className="text-white text-decoration-none px-3 py-1 rounded hover-bg-secondary"
+          >
+            Mis reportes
+          </Link>
+          <hr className="bg-secondary my-1" />
+          <Link
+            to="/favoritos"
+            onClick={() => setMenuOpen(false)}
+            className="text-white text-decoration-none px-3 py-1 rounded hover-bg-secondary"
+          >
+            Favoritos
+          </Link>
+          <hr className="bg-secondary my-1" />
+          <Link
+            to="/mis-datos"
+            onClick={() => setMenuOpen(false)}
+            className="text-white text-decoration-none px-3 py-1 rounded hover-bg-secondary"
+          >
+            Mis datos
+          </Link>
+          <hr className="bg-secondary my-1" />
+          <button
+            onClick={handleLogout}
+            className="btn btn-outline-danger mt-2"
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      )}
+    </div>
+  );
 };

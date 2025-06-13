@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "8f090c42db91def9af287379bb89c3ef1f8d9c24bea1ec877dfb8fd89f807d09"
+            "sha256": "6eafe3f028387cbf668b4f9c46d5e49a955b746addddc76f4d8c87048bc13e2a"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -383,6 +383,15 @@
             "index": "pypi",
             "markers": "python_version >= '3.8'",
             "version": "==1.4.1"
+        },
+        "faker": {
+            "hashes": [
+                "sha256:7f69d579588c23d5ce671f3fa872654ede0e67047820255f43a4aa1925b89780",
+                "sha256:cb81c09ebe06c32a10971d1bbdb264bb0e22b59af59548f011ac4809556ce533"
+            ],
+            "index": "pypi",
+            "markers": "python_version >= '3.9'",
+            "version": "==37.4.0"
         },
         "filelock": {
             "hashes": [
@@ -1321,6 +1330,14 @@
             "index": "pypi",
             "markers": "python_version >= '3.9'",
             "version": "==4.14.0"
+        },
+        "tzdata": {
+            "hashes": [
+                "sha256:1a403fada01ff9221ca8044d701868fa132215d84beb92242d9acd2147f667a8",
+                "sha256:b60a638fcc0daffadf82fe0f57e53d06bdec2f36c4df66280ae79bce6bd6f2b9"
+            ],
+            "markers": "python_version >= '2'",
+            "version": "==2025.2"
         },
         "uritemplate": {
             "hashes": [

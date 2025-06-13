@@ -16,7 +16,7 @@ export const FirebaseSignup = () => {
   const navigate = useNavigate();
 
   const defaultProfilePic =
-    "https://cdn-icons-png.flaticon.com/512/149/149071.png"; // imagen por defecto
+    "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
   const handleSignup = async (e) => {
     e.preventDefault();
@@ -28,22 +28,16 @@ export const FirebaseSignup = () => {
       );
       const user = userCredential.user;
 
-      // 🧑 Setear nombre y foto por defecto
       await updateProfile(user, {
         displayName: fullname,
         photoURL: defaultProfilePic,
       });
 
-      // 🔁 Refrescar perfil y token
       await user.reload();
       const updatedUser = auth.currentUser;
       const idToken = await updatedUser.getIdToken(true);
 
-      console.log("🔐 Token generado (signup):", idToken);
-
-      // 🔐 Mandar token al backend
       const res = await authWithFirebase(idToken);
-      console.log("Usuario registrado y autenticado:", res);
 
       alert("✅ Registro exitoso");
       navigate("/");
@@ -60,10 +54,7 @@ export const FirebaseSignup = () => {
       const user = result.user;
 
       const idToken = await user.getIdToken();
-      console.log("🔐 Token generado (Google signup):", idToken);
-
       const res = await authWithFirebase(idToken);
-      console.log("Google login:", res);
 
       alert("✅ Registro con Google exitoso");
       navigate("/");
@@ -74,51 +65,104 @@ export const FirebaseSignup = () => {
   };
 
   return (
-    <div className="container mt-4">
-      <h2>Registro con Firebase</h2>
+    <div
+      className="d-flex justify-content-center"
+      style={{
+        paddingTop: "10vh",
+        paddingBottom: "5vh",
+        fontFamily: "'Segoe UI', sans-serif",
+      }}
+    >
+      <div
+        className="p-4 shadow-lg"
+        style={{
+          background: "rgba(255, 255, 255, 0.06)",
+          backdropFilter: "blur(12px)",
+          borderRadius: "20px",
+          width: "90vw",
+          maxWidth: "380px",
+          color: "white",
+        }}
+      >
+        <h3 className="text-center mb-4 fw-light">Crear cuenta</h3>
+        <form onSubmit={handleSignup}>
+          <div className="mb-3">
+            <label className="form-label">Nombre completo</label>
+            <input
+              type="text"
+              className="form-control"
+              value={fullname}
+              onChange={(e) => setFullname(e.target.value)}
+              required
+              style={{
+                backgroundColor: "rgba(255,255,255,0.1)",
+                border: "none",
+                color: "white",
+                borderRadius: "10px",
+              }}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Correo electrónico</label>
+            <input
+              type="email"
+              className="form-control"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={{
+                backgroundColor: "rgba(255,255,255,0.1)",
+                border: "none",
+                color: "white",
+                borderRadius: "10px",
+              }}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Contraseña</label>
+            <input
+              type="password"
+              className="form-control"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{
+                backgroundColor: "rgba(255,255,255,0.1)",
+                border: "none",
+                color: "white",
+                borderRadius: "10px",
+              }}
+            />
+          </div>
+          <button
+            type="submit"
+            className="btn w-100 mb-1"
+            style={{
+              backgroundColor: "white",
+              color: "#1c1c1e",
+              borderRadius: "50px",
+              fontWeight: 500,
+            }}
+          >
+            Registrarse
+          </button>
+        </form>
 
-      <form onSubmit={handleSignup}>
-        <div className="mb-3">
-          <label className="form-label">Nombre completo</label>
-          <input
-            type="text"
-            className="form-control"
-            value={fullname}
-            onChange={(e) => setFullname(e.target.value)}
-            required
-          />
-        </div>
+        <hr className="my-4" style={{ borderColor: "rgba(255,255,255,0.2)" }} />
 
-        <div className="mb-3">
-          <label className="form-label">Correo electrónico</label>
-          <input
-            type="email"
-            className="form-control"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="mb-3">
-          <label className="form-label">Contraseña</label>
-          <input
-            type="password"
-            className="form-control"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-
-        <button type="submit" className="btn btn-success">Registrarse</button>
-      </form>
-
-      <hr />
-
-      <button onClick={handleGoogleSignup} className="btn btn-danger mt-2">
-        Registrarse con Google
-      </button>
+        <button
+          onClick={handleGoogleSignup}
+          className="btn w-100"
+          style={{
+            backgroundColor: "#db4437",
+            color: "white",
+            borderRadius: "50px",
+            fontWeight: 500,
+          }}
+        >
+          Registrarse con Google
+        </button>
+      </div>
     </div>
   );
 };

@@ -1,8 +1,13 @@
 import { useState } from "react";
-import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+} from "firebase/auth";
 import { auth } from "../firebaseAuth";
 import { useNavigate, Link } from "react-router-dom";
 import { authWithFirebase } from "../fetch/apifetch";
+// import cityFondo from "../assets/img/city_fondo3.jpg"; // asegúrate de que esté importado
 
 export const FirebaseLogin = () => {
   const [email, setEmail] = useState("");
@@ -15,17 +20,10 @@ export const FirebaseLogin = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-
-      // ✅ Obtener el token de Firebase
       const idToken = await user.getIdToken();
-      console.log("🔐 Token generado (email/password):", idToken);
-
-      // 🔁 Enviar token al backend
-      const res = await authWithFirebase(idToken); 
-      console.log("Respuesta authWithFirebase backend:", res);
-
+      const res = await authWithFirebase(idToken);
       alert("✅ Login exitoso");
-      navigate("/home");
+      navigate("/feed");
     } catch (error) {
       console.error("Error al iniciar sesión:", error.message);
       alert("❌ Error: " + error.message);
@@ -36,15 +34,10 @@ export const FirebaseLogin = () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-
       const idToken = await user.getIdToken();
-      console.log("✅ Token generado (Google):", idToken);
-
       const res = await authWithFirebase(idToken);
-      console.log("Login con Google exitoso:", res);
-
       alert("✅ Login con Google exitoso");
-      navigate("/home");
+      res.user.is_moderator ? navigate("/moderador") : navigate("/feed");
     } catch (error) {
       console.error("Error en Google login:", error.message);
       alert("❌ Error con Google: " + error.message);
@@ -52,40 +45,94 @@ export const FirebaseLogin = () => {
   };
 
   return (
-    <div className="container mt-5">
-      <h2>Iniciar Sesión</h2>
-      <form onSubmit={handleLogin}>
-        <div className="mb-3">
-          <label className="form-label">Correo electrónico</label>
-          <input
-            type="email"
-            className="form-control"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-        <div className="mb-3">
-          <label className="form-label">Contraseña</label>
-          <input
-            type="password"
-            className="form-control"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button className="btn btn-primary mb-3" type="submit">Iniciar sesión</button>
-      </form>
-      <p className="mt-3">
-        <Link to="/reset-password">¿Olvidaste tu contraseña?</Link>
-      </p>
+    <div
+      className="d-flex justify-content-center"
+      style={{
+        paddingTop: "10vh",
+        paddingBottom: "5vh",
+        fontFamily: "'Segoe UI', sans-serif",
+      }}
+    >
+      <div
+        className="p-4 shadow-lg"
+        style={{
+          background: "rgba(255, 255, 255, 0.06)",
+          backdropFilter: "blur(12px)",
+          borderRadius: "20px",
+          width: "90vw",
+          maxWidth: "360px",
+          color: "white",
+        }}
+      >
+        <h3 className="text-center mb-4 fw-light">Iniciar Sesión</h3>
+        <form onSubmit={handleLogin}>
+          <div className="mb-3">
+            <label className="form-label">Correo electrónico</label>
+            <input
+              type="email"
+              className="form-control"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={{
+                backgroundColor: "rgba(255,255,255,0.1)",
+                border: "none",
+                color: "white",
+                borderRadius: "10px",
+              }}
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Contraseña</label>
+            <input
+              type="password"
+              className="form-control"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              style={{
+                backgroundColor: "rgba(255,255,255,0.1)",
+                border: "none",
+                color: "white",
+                borderRadius: "10px",
+              }}
+            />
+          </div>
+          <button
+            type="submit"
+            className="btn w-100 mb-2"
+            style={{
+              backgroundColor: "white",
+              color: "#1c1c1e",
+              borderRadius: "50px",
+              fontWeight: 500,
+            }}
+          >
+            Iniciar sesión
+          </button>
+        </form>
 
-      <hr />
+        <div className="text-center mt-2">
+          <Link to="/reset-password" style={{ color: "#ccc", fontSize: "0.9rem" }}>
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </div>
 
-      <button className="btn btn-danger" onClick={handleGoogleLogin}>
-        Iniciar sesión con Google
-      </button>
+        <hr className="my-4" style={{ borderColor: "rgba(255,255,255,0.2)" }} />
+
+        <button
+          className="btn w-100"
+          onClick={handleGoogleLogin}
+          style={{
+            backgroundColor: "#db4437",
+            color: "white",
+            borderRadius: "50px",
+            fontWeight: 500,
+          }}
+        >
+          Iniciar sesión con Google
+        </button>
+      </div>
     </div>
   );
 };

@@ -14,7 +14,7 @@ import { PrivateRoute } from "./components/PrivateRoute";
 import { ResetPassword } from "./pages/ResetPassword";
 import { UserProfile } from "./pages/UserProfile";
 import { Perfil } from "./pages/Perfil";
-import { Moderador } from "./pages/Moderador";
+// import { Moderador } from "./pages/Moderador";
 import { SubirReporte } from "./pages/SubirReporte";
 import { MisDatos } from "./pages/MisDatos";
 import { MisReportes } from "./pages/MisReportes";
@@ -24,15 +24,15 @@ import { HomeModerador } from "./pages/HomeModerador";
 import { Denuncias } from "./pages/Denuncias";
 import { UsuariosSancionados } from "./pages/Sancionados";
 import { BuscadorModerador } from "./pages/BuscadorModerador";
-import { HomeAdmin } from "./pages/HomeAdmin";
 import { GestionarUsuarios } from "./pages/GestionarUsuarios";
-import { BuscadorAdmin } from "./pages/BuscadorAdmin";
-
+// import { BuscadorAdmin } from "./pages/BuscadorAdmin";
+// import {RootRedirect} from "./components/RootRedirect";
+import { Loader } from "./components/Loader";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<Layout />} errorElement={<h1>Not found!</h1>}>
-      
+      {/* <Route index element={<RootRedirect />} /> */}
    
       <Route path="firebase-login" element={<FirebaseLogin />} />
       <Route path="signup" element={<FirebaseSignup />} />
@@ -43,13 +43,14 @@ export const router = createBrowserRouter(
       <Route path="mis-reportes" element={<MisReportes />} />
       <Route path="favoritos" element={<Favoritos />} />
       <Route path="reporte" element={<Reporte />} />
+
       <Route path="moderador" element={<HomeModerador />} />
       <Route path="denuncias" element={<Denuncias />} />
+
       <Route path="usuarios-sancionados" element={<UsuariosSancionados />} />
+      
       <Route path="buscador-moderador" element={<BuscadorModerador />} />
-      <Route path="homeadmin" element={<HomeAdmin />} />
       <Route path="gestionar-usuarios" element={<GestionarUsuarios />} />
-      <Route path="buscador-admin" element={<BuscadorAdmin />} />
 
       {/* <Route
         index
@@ -99,14 +100,7 @@ export const router = createBrowserRouter(
           </PrivateRoute>
         }
       />
-      <Route
-        path="moderador"
-        element={
-          <PrivateRoute>
-            <Moderador />
-          </PrivateRoute>
-        }
-      />
+    
     </Route>
   )
 );
