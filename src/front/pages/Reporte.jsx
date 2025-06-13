@@ -3,28 +3,11 @@ import { Link } from "react-router-dom";
 import corazonVacio from "../assets/img/corazon_vacio.png";
 import corazonVacioNegro from "../assets/img/corazon_vacio_negro.png";
 import imagen3_4 from "../assets/img/city_fondo_3_4.jpg";
+import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const Reporte = () => {
-  const reporte = {
-    titulo:
-      "Gran rotura de las vías del tren a la altura de la avenida de América",
-    imagen: imagen3_4,
-    descripcion:
-      "Este es un texto descriptivo del reporte que explica qué pasó, detalles, etc.",
-    votosPositivos: 123,
-    votosNegativos: 4,
-    meGusta: 98,
-    usuario: {
-      nombre: "Juan Pérez",
-      avatar: "https://i.pravatar.cc/50?img=22",
-    },
-    comentarios: [
-      { id: 1, usuario: "Ana", texto: "Muy útil este reporte, gracias!" },
-      { id: 2, usuario: "Luis", texto: "¿Hay más detalles disponibles?" },
-      { id: 3, usuario: "Maria", texto: "Apoyo esta denuncia." },
-    ],
-  };
 
+  const {store,dispatch} = useGlobalReducer()
   const [liked, setLiked] = useState(false);
   const toggleLike = () => setLiked((prev) => !prev);
 
@@ -47,14 +30,14 @@ export const Reporte = () => {
               borderRadius: "0.5rem",
             }}
           >
-            {reporte.titulo}
+            {store.reporte.titulo}
           </div>
 
           {/* Imagen */}
           <div className="position-relative">
             <img
-              src={reporte.imagen}
-              alt={reporte.titulo}
+              src={store.reporte.imagen}
+              alt={store.reporte.titulo}
               className="w-100"
               style={{
                 aspectRatio: "3/4",
@@ -75,8 +58,8 @@ export const Reporte = () => {
               }}
             >
               <img
-                src={reporte.usuario.avatar}
-                alt={reporte.usuario.nombre}
+                src={store.reporte.usuario.avatar}
+                alt={store.reporte.usuario.nombre}
                 style={{
                   width: "24px",
                   height: "24px",
@@ -92,7 +75,7 @@ export const Reporte = () => {
                   textOverflow: "ellipsis",
                 }}
               >
-                {reporte.usuario.nombre}
+                {store.reporte.usuario.nombre}
               </span>
             </Link>
 
@@ -138,7 +121,7 @@ export const Reporte = () => {
               }}
               title="Votos positivos"
             >
-              Upvote {reporte.votosPositivos}
+              Upvote {store.reporte.votosPositivos}
             </button>
             <button
               className="btn btn-sm"
@@ -151,7 +134,7 @@ export const Reporte = () => {
               }}
               title="Votos negativos"
             >
-              Downvote {reporte.votosNegativos}
+              Downvote {store.reporte.votosNegativos}
             </button>
             <button
               className="btn btn-sm"
@@ -180,7 +163,7 @@ export const Reporte = () => {
               borderRadius: "0.5rem",
             }}
           >
-            {reporte.descripcion}
+            {store.reporte.descripcion}
           </div>
 
           {/* Comentarios */}
@@ -196,7 +179,7 @@ export const Reporte = () => {
             }}
           >
             <h5 style={{ color: "white", fontWeight: "500" }}>Comentarios</h5>
-            {reporte.comentarios.map(({ id, usuario, texto }) => (
+            {store.reporte.comentarios.map(({ id, usuario, texto }) => (
               <div
                 key={id}
                 className="mb-3 d-flex justify-content-between align-items-start"

@@ -3,48 +3,11 @@ import { Link } from "react-router-dom";
 import imagen3_4 from "../assets/img/city_fondo_3_4.jpg";
 import corazonVacio from "../assets/img/corazon_vacio.png";
 import corazonVacioNegro from "../assets/img/corazon_vacio_negro.png";
-
-const votedPosts = {
-  1: { up: true, down: false },
-  2: { up: false, down: false },
-};
-
-const posts = [
-  {
-    id: 1,
-    user: { name: "Juan Pérez", avatar: "https://i.pravatar.cc/50?img=10" },
-    imageUrl: imagen3_4,
-    title: "Bache enorme en la calle principal",
-    likes: 34,
-    positiveVotes: 40,
-    negativeVotes: 5,
-    comments: [],
-  },
-  {
-    id: 2,
-    user: { name: "María López", avatar: "https://i.pravatar.cc/50?img=20" },
-    imageUrl: imagen3_4,
-    title: "Luminaria rota en el parque",
-    likes: 18,
-    positiveVotes: 20,
-    negativeVotes: 2,
-    comments: [],
-  },
-  {
-    id: 3,
-    user: { name: "Luis García", avatar: "https://i.pravatar.cc/50?img=15" },
-    imageUrl: imagen3_4,
-    title: "Contenedor de basura desbordado",
-    likes: 25,
-    positiveVotes: 30,
-    negativeVotes: 3,
-    comments: [],
-  },
-];
+import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const Feed = () => {
   const [likedPosts, setLikedPosts] = useState({});
-
+  const {store,dispatch} = useGlobalReducer()
   const toggleLike = (postId) => {
     setLikedPosts((prev) => ({
       ...prev,
@@ -54,8 +17,8 @@ export const Feed = () => {
 
   return (
     <div className="container py-4" style={{ maxWidth: 600 }}>
-      {posts.map((post) => {
-        const voted = votedPosts[post.id] || { up: false, down: false };
+      {store.posts.map((post) => {
+        const voted = store.votedPosts[post.id] || { up: false, down: false };
         const isLiked = likedPosts[post.id];
 
         return (

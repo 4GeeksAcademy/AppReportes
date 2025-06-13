@@ -1,4 +1,5 @@
 import { getAuth } from "firebase/auth";
+import imagen3_4 from "./assets/img/city_fondo_3_4.jpg";
 
 export const initialStore=()=>{
   return{
@@ -35,6 +36,61 @@ export const initialStore=()=>{
         tiempo: "1 día",
       },
     ],
+    posts : [
+      {
+        id: 1,
+        user: { name: "Juan Pérez", avatar: "https://i.pravatar.cc/50?img=10" },
+        imageUrl: imagen3_4,
+        title: "Bache enorme en la calle principal",
+        likes: 34,
+        positiveVotes: 40,
+        negativeVotes: 5,
+        comments: [],
+      },
+      {
+        id: 2,
+        user: { name: "María López", avatar: "https://i.pravatar.cc/50?img=20" },
+        imageUrl: imagen3_4,
+        title: "Luminaria rota en el parque",
+        likes: 18,
+        positiveVotes: 20,
+        negativeVotes: 2,
+        comments: [],
+      },
+      {
+        id: 3,
+        user: { name: "Luis García", avatar: "https://i.pravatar.cc/50?img=15" },
+        imageUrl: imagen3_4,
+        title: "Contenedor de basura desbordado",
+        likes: 25,
+        positiveVotes: 30,
+        negativeVotes: 3,
+        comments: [],
+      },
+    ],
+    votedPosts : {
+      1: { up: true, down: false },
+      2: { up: false, down: false },
+    },
+    reporte : {
+      titulo:
+        "Gran rotura de las vías del tren a la altura de la avenida de América",
+      imagen: imagen3_4,
+      descripcion:
+        "Este es un texto descriptivo del reporte que explica qué pasó, detalles, etc.",
+      votosPositivos: 123,
+      votosNegativos: 4,
+      meGusta: 98,
+      usuario: {
+        nombre: "Juan Pérez",
+        avatar: "https://i.pravatar.cc/50?img=22",
+      },
+      comentarios: [
+        { id: 1, usuario: "Ana", texto: "Muy útil este reporte, gracias!" },
+        { id: 2, usuario: "Luis", texto: "¿Hay más detalles disponibles?" },
+        { id: 3, usuario: "Maria", texto: "Apoyo esta denuncia." },
+      ],
+    },
     todos: [
       {
         id: 1,
