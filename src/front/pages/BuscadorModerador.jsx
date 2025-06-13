@@ -25,63 +25,137 @@ export const BuscadorModerador = () => {
   );
 
   return (
-    <div className="d-flex bg-light min-vh-100">
-      <SidebarModerador />
+    <div
+      className="d-flex min-vh-100"
+      style={{
+        color: "white",
+        background:
+          "url('/path-to-some-background.jpg') no-repeat center center fixed",
+        backgroundSize: "cover",
+        padding: "1rem",
+      }}
+    >
+      {/* <SidebarModerador /> */}
 
-      <main className="flex-grow-1 p-4">
-        <h1 className="mb-4">🔍 Buscador Moderador</h1>
+      <main style={{ flexGrow: 1, maxWidth: 900, margin: "0 auto", width: "95%" }}>
+        {/* Título con blur */}
+        <div
+          style={{
+            background: "rgba(255,255,255,0.1)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            borderRadius: 15,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+            padding: "1.5rem 1rem",
+            marginBottom: "2rem",
+            textAlign: "center",
+          }}
+        >
+          <h1
+            style={{
+              fontWeight: 300,
+              fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+              margin: 0,
+            }}
+          >
+            🔍 Buscador Moderador
+          </h1>
+        </div>
 
-        <input
-          type="text"
-          className="form-control mb-4"
-          placeholder="Buscar usuarios o reportes..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+        {/* Input con blur */}
+        <div
+          style={{
+            background: "rgba(255,255,255,0.1)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            borderRadius: 15,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+            padding: "1rem",
+            marginBottom: "2rem",
+          }}
+        >
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Buscar usuarios o reportes..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            style={{
+              background: "rgba(255,255,255,0.2)",
+              border: "none",
+              color: "white",
+            }}
+          />
+        </div>
 
         {/* Usuarios */}
-        <h4 className="mb-3">👤 Usuarios</h4>
-        {filteredUsuarios.length > 0 ? (
-          <ul className="list-group mb-4">
-            {filteredUsuarios.map((u) => (
-              <li
-                key={u.id}
-                className="list-group-item d-flex justify-content-between align-items-center"
-              >
-                <span>
-                  <strong>{u.nombre}</strong> — <em>{u.estado}</em>
-                </span>
-                <button className="btn btn-sm btn-outline-danger">
-                  {u.estado === "Activo" ? "Suspender" : "Ver detalles"}
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-muted">No se encontraron usuarios.</p>
-        )}
+        <div
+          style={{
+            background: "rgba(255,255,255,0.1)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            borderRadius: 15,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+            padding: "1rem",
+            marginBottom: "2rem",
+          }}
+        >
+          <h4 style={{ marginBottom: "1rem" }}>👤 Usuarios</h4>
+          {filteredUsuarios.length > 0 ? (
+            <ul className="list-group">
+              {filteredUsuarios.map((u) => (
+                <li
+                  key={u.id}
+                  className="list-group-item d-flex justify-content-between align-items-center"
+                  style={{ backgroundColor: "transparent", border: "none", color: "white" }}
+                >
+                  <span>
+                    <strong>{u.nombre}</strong> — <em>{u.estado}</em>
+                  </span>
+                  <button className="btn btn-sm btn-outline-danger">
+                    {u.estado === "Activo" ? "Suspender" : "Ver detalles"}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-muted">No se encontraron usuarios.</p>
+          )}
+        </div>
 
         {/* Reportes */}
-        <h4 className="mb-3">📄 Reportes</h4>
-        {filteredReportes.length > 0 ? (
-          <ul className="list-group">
-            {filteredReportes.map((r) => (
-              <li
-                key={r.id}
-                className="list-group-item d-flex justify-content-between align-items-center"
-              >
-                <span>
-                  <strong>{r.titulo}</strong> — por <em>{r.autor}</em>
-                </span>
-                <button className="btn btn-sm btn-outline-primary">
-                  Revisar reporte
-                </button>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="text-muted">No se encontraron reportes.</p>
-        )}
+        <div
+          style={{
+            background: "rgba(255,255,255,0.1)",
+            backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
+            borderRadius: 15,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
+            padding: "1rem",
+          }}
+        >
+          <h4 style={{ marginBottom: "1rem" }}>📄 Reportes</h4>
+          {filteredReportes.length > 0 ? (
+            <ul className="list-group">
+              {filteredReportes.map((r) => (
+                <li
+                  key={r.id}
+                  className="list-group-item d-flex justify-content-between align-items-center"
+                  style={{ backgroundColor: "transparent", border: "none", color: "white" }}
+                >
+                  <span>
+                    <strong>{r.titulo}</strong> — por <em>{r.autor}</em>
+                  </span>
+                  <button className="btn btn-sm btn-outline-primary">
+                    Revisar
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-muted">No se encontraron reportes.</p>
+          )}
+        </div>
       </main>
     </div>
   );

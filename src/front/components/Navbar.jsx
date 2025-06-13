@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { signOut } from "firebase/auth";
@@ -9,6 +9,8 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+  const navRef = useRef(null);
 
   const handleLogout = async () => {
     try {
@@ -20,77 +22,133 @@ export const Navbar = () => {
     }
   };
 
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        menuOpen &&
+        menuRef.current &&
+        !menuRef.current.contains(event.target) &&
+        navRef.current &&
+        !navRef.current.contains(event.target)
+      ) {
+        setMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [menuOpen]);
+
   return (
-    <nav className="navbar navbar-dark bg-dark rounded-5 m-2 px-3 py-2 position-relative">
-      <div className="container-fluid d-flex justify-content-between align-items-center w-100">
-        {/* Botón hamburguesa a la izquierda */}
-        <button
-          className="btn btn-outline-light"
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          ☰
-        </button>
-
-        {/* Centro: logo (solo si el menú está cerrado) */}
-        {!menuOpen && (
-          <Link
-            to="/feed"
-            className="position-absolute top-50 start-50 translate-middle"
+    <div style={{ position: "relative" }}>
+      <nav
+        ref={navRef}
+        className="navbar navbar-dark bg-dark rounded-5 m-2 px-3 py-2 position-relative"
+      >
+        <div className="container-fluid d-flex justify-content-between align-items-center w-100">
+          <button
+            className="btn btn-outline-light"
+            onClick={() => setMenuOpen(!menuOpen)}
+            aria-label="Toggle menu"
           >
-            <img src={logo} alt="Logo" style={{ height: "40px" }} />
+            ☰
+          </button>
+
+          {(!menuOpen || user) && (
+            <Link
+              to="/feed"
+              className="position-absolute top-50 start-50 translate-middle"
+              aria-label="Ir al feed"
+            >
+              <img src={logo} alt="Logo" style={{ height: "40px" }} />
+            </Link>
+          )}
+
+          {menuOpen && !user && (
+            <div className="d-flex gap-2 mx-auto">
+              <Link to="/signup" onClick={() => setMenuOpen(false)}>
+                <button className="btn btn-outline-light">Sign Up</button>
+              </Link>
+              <Link to="/firebase-login" onClick={() => setMenuOpen(false)}>
+                <button className="btn btn-outline-light">Log In</button>
+              </Link>
+            </div>
+          )}
+
+          <button
+            onClick={() => navigate("/subir-reporte")}
+            title="Subir reporte"
+            style={{
+              border: "1px solid white",
+              borderRadius: "50%",
+              background: "transparent",
+              color: "lightgrey",
+              width: "38px",
+              height: "38px",
+              fontSize: "24px",
+              lineHeight: "38px",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              cursor: "pointer",
+              userSelect: "none",
+            }}
+            aria-label="Subir reporte"
+          >
+            +
+          </button>
+        </div>
+      </nav>
+
+      {menuOpen && user && (
+        <div
+          ref={menuRef}
+          className="bg-dark rounded-3 shadow position-absolute"
+          style={{
+            top: "calc(100% + 10px)",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "calc(100% - 32px)",
+            maxWidth: "1200px",
+            zIndex: 1050,
+            padding: "1rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.1rem",
+            color: "white",
+          }}
+        >
+          <Link
+            to="/mis-reportes"
+            onClick={() => setMenuOpen(false)}
+            className="text-white text-decoration-none px-3 py-1 rounded hover-bg-secondary"
+          >
+            Mis reportes
           </Link>
-        )}
-
-        {/* Menú desplegable horizontal (dentro del navbar) */}
-        {menuOpen && (
-          <div className="d-flex gap-2 mx-auto">
-            {user ? (
-              <>
-                <Link to="/profile" onClick={() => setMenuOpen(false)}>
-                  <button className="btn btn-outline-light">Perfil</button>
-                </Link>
-                <button className="btn btn-danger" onClick={handleLogout}>
-                  Cerrar sesión
-                </button>
-              </>
-            ) : (
-              <>
-                <Link to="/signup" onClick={() => setMenuOpen(false)}>
-                  <button className="btn btn-outline-light">Sign Up</button>
-                </Link>
-                <Link to="/firebase-login" onClick={() => setMenuOpen(false)}>
-                  <button className="btn btn-outline-light">Log In</button>
-                </Link>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Botón circular con + para subir reporte */}
-		<button
-		onClick={() => navigate("/subir-reporte")}
-		title="Subir reporte"
-		style={{
-			border: "1px solid white",
-			borderRadius: "50%",
-			background: "transparent",
-			color: "lightgrey",
-			width: "38px",
-			height: "38px",
-			fontSize: "24px",
-			lineHeight: "38px",  // Igual que el height del botón
-			display: "flex",
-			justifyContent: "center",
-			alignItems: "center",
-			cursor: "pointer",
-			userSelect: "none"
-		}}
-		aria-label="Subir reporte"
-		>
-		+
-		</button>
-
-      </div>
-    </nav>
+          <hr className="bg-secondary my-1" />
+          <Link
+            to="/favoritos"
+            onClick={() => setMenuOpen(false)}
+            className="text-white text-decoration-none px-3 py-1 rounded hover-bg-secondary"
+          >
+            Favoritos
+          </Link>
+          <hr className="bg-secondary my-1" />
+          <Link
+            to="/mis-datos"
+            onClick={() => setMenuOpen(false)}
+            className="text-white text-decoration-none px-3 py-1 rounded hover-bg-secondary"
+          >
+            Mis datos
+          </Link>
+          <hr className="bg-secondary my-1" />
+          <button
+            onClick={handleLogout}
+            className="btn btn-outline-danger mt-2"
+          >
+            Cerrar sesión
+          </button>
+        </div>
+      )}
+    </div>
   );
 };

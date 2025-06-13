@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import corazonVacio from "../assets/img/corazon_vacio.png";
 import corazonVacioNegro from "../assets/img/corazon_vacio_negro.png";
 import imagen3_4 from "../assets/img/city_fondo_3_4.jpg";
@@ -62,14 +63,14 @@ export const Reporte = () => {
               }}
             />
 
-            {/* Usuario */}
-            <div
-              className="position-absolute top-0 start-0 m-2 d-flex align-items-center gap-2 px-2 py-2"
+            {/* Usuario envuelto con Link */}
+            <Link
+              to="/mis-reportes"
+              className="position-absolute top-0 start-0 m-2 d-flex align-items-center gap-2 px-2 py-2 text-white text-decoration-none"
               style={{
                 background: "rgba(255, 255, 255, 0.2)",
                 backdropFilter: "blur(4px)",
                 borderRadius: "50px",
-                color: "white",
                 maxWidth: "70%",
               }}
             >
@@ -93,7 +94,7 @@ export const Reporte = () => {
               >
                 {reporte.usuario.nombre}
               </span>
-            </div>
+            </Link>
 
             {/* Me gusta */}
             <button

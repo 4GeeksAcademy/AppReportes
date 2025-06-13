@@ -1,9 +1,9 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import imagen3_4 from "../assets/img/city_fondo_3_4.jpg";
 import corazonVacio from "../assets/img/corazon_vacio.png";
 import corazonVacioNegro from "../assets/img/corazon_vacio_negro.png";
 
-// Simulación de votos realizados
 const votedPosts = {
   1: { up: true, down: false },
   2: { up: false, down: false },
@@ -39,7 +39,7 @@ const posts = [
     positiveVotes: 30,
     negativeVotes: 3,
     comments: [],
-  }
+  },
 ];
 
 export const Feed = () => {
@@ -65,25 +65,28 @@ export const Feed = () => {
             style={{ background: "transparent" }}
           >
             <div className="position-relative">
-              <img
-                src={post.imageUrl}
-                alt={post.title}
-                className="w-100"
-                style={{
-                  aspectRatio: "3/4",
-                  objectFit: "cover",
-                  borderRadius: "1rem",
-                }}
-              />
+              {/* Imagen que redirige a /reporte */}
+              <Link to="/reporte">
+                <img
+                  src={post.imageUrl}
+                  alt={post.title}
+                  className="w-100"
+                  style={{
+                    aspectRatio: "3/4",
+                    objectFit: "cover",
+                    borderRadius: "1rem",
+                  }}
+                />
+              </Link>
 
-              {/* Usuario (avatar + nombre) */}
-              <div
-                className="position-absolute top-0 start-0 m-2 d-flex align-items-center gap-2 px-2 py-2"
+              {/* Usuario que redirige a /mis-reportes */}
+              <Link
+                to="/mis-reportes"
+                className="position-absolute top-0 start-0 m-2 d-flex align-items-center gap-2 px-2 py-2 text-white text-decoration-none"
                 style={{
                   background: "rgba(255, 255, 255, 0.2)",
                   backdropFilter: "blur(4px)",
                   borderRadius: "50px",
-                  color: "white",
                   maxWidth: "70%",
                 }}
               >
@@ -107,7 +110,7 @@ export const Feed = () => {
                 >
                   {post.user.name}
                 </span>
-              </div>
+              </Link>
 
               {/* Botón like */}
               <button
