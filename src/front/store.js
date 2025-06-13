@@ -36,6 +36,35 @@ export const initialStore=()=>{
         tiempo: "1 día",
       },
     ],
+    denunciasData : [
+      {
+        id: 1,
+        denunciante: "ana2025",
+        denunciado: "usuario123",
+        tipo: "Comentario",
+        motivo: "Lenguaje inapropiado",
+        fecha: "2025-06-10",
+        estado: "pendiente",
+      },
+      {
+        id: 2,
+        denunciante: "juan_dev",
+        denunciado: "spamBot",
+        tipo: "Reporte",
+        motivo: "Spam",
+        fecha: "2025-06-09",
+        estado: "pendiente",
+      },
+      {
+        id: 3,
+        denunciante: "lucia33",
+        denunciado: "user456",
+        tipo: "Foto",
+        motivo: "Violación de privacidad",
+        fecha: "2025-06-08",
+        estado: "pendiente",
+      },
+    ],
     posts : [
       {
         id: 1,
@@ -68,10 +97,12 @@ export const initialStore=()=>{
         comments: [],
       },
     ],
-    votedPosts : {
+    votedPosts : [
+      {
       1: { up: true, down: false },
       2: { up: false, down: false },
-    },
+      }
+    ],
     reporte : {
       titulo:
         "Gran rotura de las vías del tren a la altura de la avenida de América",
@@ -91,6 +122,28 @@ export const initialStore=()=>{
         { id: 3, usuario: "Maria", texto: "Apoyo esta denuncia." },
       ],
     },
+    favoritos : [
+      {
+        id: 1,
+        user: { name: "Juan Pérez", avatar: "https://i.pravatar.cc/50?img=10" },
+        imageUrl: imagen3_4,
+      },
+      {
+        id: 2,
+        user: { name: "María López", avatar: "https://i.pravatar.cc/50?img=20" },
+        imageUrl: imagen3_4,
+      },
+      {
+        id: 3,
+        user: { name: "Luis García", avatar: "https://i.pravatar.cc/50?img=15" },
+        imageUrl: imagen3_4,
+      },
+      {
+        id: 4,
+        user: { name: "Ana Ruiz", avatar: "https://i.pravatar.cc/50?img=30" },
+        imageUrl: imagen3_4,
+      },
+    ],
     todos: [
       {
         id: 1,

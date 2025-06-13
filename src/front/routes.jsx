@@ -37,7 +37,7 @@ export const router = createBrowserRouter(
       <Route path="firebase-login" element={<FirebaseLogin />} />
       <Route path="signup" element={<FirebaseSignup />} />
       <Route path="reset-password" element={<ResetPassword />} />
-      <Route path="feed" element={<Feed />} />
+      <Route path="feed" element={<Feed />} /> 
       <Route path="subir-reporte" element={<SubirReporte />} />
       <Route path="mis-datos" element={<MisDatos />} />
       <Route path="mis-reportes" element={<MisReportes />} />

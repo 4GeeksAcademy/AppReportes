@@ -1,36 +1,8 @@
 import React from "react";
-
-const denunciasData = [
-  {
-    id: 1,
-    denunciante: "ana2025",
-    denunciado: "usuario123",
-    tipo: "Comentario",
-    motivo: "Lenguaje inapropiado",
-    fecha: "2025-06-10",
-    estado: "pendiente",
-  },
-  {
-    id: 2,
-    denunciante: "juan_dev",
-    denunciado: "spamBot",
-    tipo: "Reporte",
-    motivo: "Spam",
-    fecha: "2025-06-09",
-    estado: "pendiente",
-  },
-  {
-    id: 3,
-    denunciante: "lucia33",
-    denunciado: "user456",
-    tipo: "Foto",
-    motivo: "Violación de privacidad",
-    fecha: "2025-06-08",
-    estado: "pendiente",
-  },
-];
+import useGlobalReducer from "../hooks/useGlobalReducer";
 
 export const Denuncias = () => {
+  const {store,dispatch} = useGlobalReducer()
   const handleActionClick = (action, id) => {
     alert(`Acción "${action}" en denuncia ID ${id}`);
   };
@@ -105,7 +77,7 @@ export const Denuncias = () => {
               </tr>
             </thead>
             <tbody>
-              {denunciasData.map(
+              {store.denunciasData.map(
                 ({ id, denunciante, denunciado, tipo, motivo, fecha, estado }) => (
                   <tr
                     key={id}

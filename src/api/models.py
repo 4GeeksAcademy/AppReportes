@@ -41,6 +41,7 @@ class Reporte(db.Model):
     __tablename__ = "reportes"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    titulo: Mapped[str] = mapped_column(String(100), nullable=False)
     text: Mapped[str] = mapped_column(String(200), nullable=False)
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
@@ -53,6 +54,7 @@ class Reporte(db.Model):
     def serialize(self):
         return {
             "id": self.id,
+            "titulo": self.titulo,
             "text": self.text,
             "author_id": self.author_id,
             "author": self.author.serialize() if self.author else None,
