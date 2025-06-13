@@ -69,7 +69,7 @@ class Media(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     type: Mapped[str] = mapped_column(String(20), default="image")
-    image: Mapped[str] = mapped_column(String(500), nullable=True)
+    image: Mapped[str] = mapped_column(String(500), nullable=False)
     reporte_id: Mapped[int] = mapped_column(ForeignKey("reportes.id"), nullable=False)
 
     reporte: Mapped["Reporte"] = relationship("Reporte", back_populates="images")

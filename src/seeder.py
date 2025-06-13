@@ -1,4 +1,4 @@
-from app import app,db  # Asegúrate de importar tu instancia de `db` correctamente si está en otro archivo
+from app import app, db
 from api.models import User, Reporte, Media, Comment, Favorite, Vote, Denuncia, Sancion
 from faker import Faker
 import random
@@ -6,8 +6,8 @@ import random
 faker = Faker()
 
 with app.app_context():
-    # db.drop_all()
-    # db.create_all()
+    db.drop_all()
+    db.create_all()
 
     users = []
     for _ in range(10):
@@ -27,6 +27,7 @@ with app.app_context():
     reportes = []
     for i in range(10):
         reporte = Reporte(
+            titulo=faker.sentence(nb_words=5),  # NUEVO CAMPO
             text=faker.text(max_nb_chars=150),
             author_id=random.choice(users).id
         )
@@ -36,16 +37,36 @@ with app.app_context():
     db.session.commit()
 
     medias = []
-    for i in range(10):
+
+    # ✅ Asegurar al menos una imagen por reporte
+    for reporte in reportes:
+        width = random.randint(400, 800)
+        height = random.randint(300, 600)
+        image = f"https://loremflickr.com/{width}/{height}/city"
         media = Media(
             type="image",
-            image=faker.image_url(),
+            image=image,
+            reporte_id=reporte.id
+        )
+        db.session.add(media)
+        medias.append(media)
+
+    # 🔁 (Opcional) Añadir más imágenes aleatorias extra
+    for _ in range(5):
+        width = random.randint(400, 800)
+        height = random.randint(300, 600)
+        image = f"https://loremflickr.com/{width}/{height}/nature"
+        media = Media(
+            type="image",
+            image=image,
             reporte_id=random.choice(reportes).id
         )
         db.session.add(media)
         medias.append(media)
 
+
     db.session.commit()
+
 
     comments = []
     for i in range(10):

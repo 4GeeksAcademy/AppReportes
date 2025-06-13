@@ -1,42 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import imagen3_4 from "../assets/img/city_fondo_3_4.jpg";
 import corazonVacio from "../assets/img/corazon_vacio.png";
 import corazonVacioNegro from "../assets/img/corazon_vacio_negro.png";
 import useGlobalReducer from "../hooks/useGlobalReducer";
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const Feed = () => {
   const [likedPosts, setLikedPosts] = useState({});
-  const { store, dispatch } = useGlobalReducer();
-  const fetchReports = async () => {
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/reportes`);
-      const data = await res.json();
-
-      const mappedPosts = data.map((reporte) => ({
-        id: reporte.id,
-        title: reporte.titulo,
-        text: reporte.text,
-        imageUrl: reporte.images?.[0]?.image || imagen3_4,
-        positiveVotes: reporte.votes?.filter((v) => v.is_upvote).length || 0,
-        negativeVotes: reporte.votes?.filter((v) => !v.is_upvote).length || 0,
-        user: {
-          id: reporte.author?.id,
-          name: reporte.author?.fullname || "Anónimo",
-          avatar: reporte.author?.propile_picture || "https://i.pravatar.cc/50",
-        },
-      }));
-
-      dispatch({ type: "LOAD_REPORTS", payload: mappedPosts });
-    } catch (error) {
-      console.error("Error al obtener reportes:", error);
-    }
-  };
-  useEffect(() => {
-    fetchReports();
-  }, []);
-
+  const {store,dispatch} = useGlobalReducer()
   const toggleLike = (postId) => {
     setLikedPosts((prev) => ({
       ...prev,
@@ -57,6 +28,7 @@ export const Feed = () => {
             style={{ background: "transparent" }}
           >
             <div className="position-relative">
+              {/* Imagen que redirige a /reporte */}
               <Link to="/reporte">
                 <img
                   src={post.imageUrl}
@@ -70,8 +42,9 @@ export const Feed = () => {
                 />
               </Link>
 
+              {/* Usuario que redirige a /mis-reportes */}
               <Link
-                to={`/users/${post.user.id}/reportes`}
+                to="/mis-reportes"
                 className="position-absolute top-0 start-0 m-2 d-flex align-items-center gap-2 px-2 py-2 text-white text-decoration-none"
                 style={{
                   background: "rgba(255, 255, 255, 0.2)",
@@ -102,6 +75,7 @@ export const Feed = () => {
                 </span>
               </Link>
 
+              {/* Botón like */}
               <button
                 onClick={() => toggleLike(post.id)}
                 className="position-absolute top-0 end-0 m-2 border-0 d-flex align-items-center justify-content-center"
@@ -124,6 +98,7 @@ export const Feed = () => {
                 />
               </button>
 
+              {/* Título */}
               <div
                 className="position-absolute start-50 translate-middle-x px-3 py-2 mb-2 text-start"
                 style={{
@@ -144,6 +119,7 @@ export const Feed = () => {
                 </h5>
               </div>
 
+              {/* Botones de votación */}
               <div
                 className="position-absolute bottom-0 start-50 translate-middle-x mb-3 d-flex gap-2"
                 style={{

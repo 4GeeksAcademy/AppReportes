@@ -202,14 +202,16 @@ def update_user(id):
 @jwt_required()
 def create_reporte():
     data = request.get_json()
-    if not data or "text" not in data:
-        return jsonify({"error": "Falta el campo 'text'"}), 400
+    if not data or "text" not in data or "titulo" not in data:
+        return jsonify({"error": "Faltan los campos 'titulo' y/o 'text'"}), 400
+
     current = get_current_user()
     claims = current["tokenClaims"]
     author_id = claims.get("id")
 
     # Crear el reporte
     new_reporte = Reporte(
+        titulo=data["titulo"],
         text=data["text"],
         author_id=author_id
     )
@@ -271,7 +273,6 @@ def update_report(user_id, report_id):
     db_user = current["database"]
     requester_id = claims.get("id")
 
-    # Solo puede editar su propio reporte
     if requester_id != user_id:
         return jsonify({"error": "No autorizado para editar este reporte"}), 403
 
@@ -282,19 +283,17 @@ def update_report(user_id, report_id):
     data = request.get_json()
 
     # Solo permitimos actualizar ciertos campos
-    allowed_fields = ["text"]
+    allowed_fields = ["text", "titulo"]
     for field in allowed_fields:
         if field in data:
             setattr(report, field, data[field])
 
     # Si se actualizan imágenes
     if "images" in data:
-        # Borrar imágenes antiguas
         for img in report.images:
             db.session.delete(img)
         db.session.commit()
 
-        # Agregar nuevas imágenes
         for image_url in data["images"]:
             new_media = Media(type="image", image=image_url, reporte_id=report.id)
             db.session.add(new_media)

@@ -67,7 +67,7 @@ export const initialStore=()=>{
     ],
     posts : [
       {
-        id: 100,
+        id: 1,
         user: { name: "Juan Pérez", avatar: "https://i.pravatar.cc/50?img=10" },
         imageUrl: imagen3_4,
         title: "Bache enorme en la calle principal",
@@ -75,7 +75,27 @@ export const initialStore=()=>{
         positiveVotes: 40,
         negativeVotes: 5,
         comments: [],
-      }
+      },
+      {
+        id: 2,
+        user: { name: "María López", avatar: "https://i.pravatar.cc/50?img=20" },
+        imageUrl: imagen3_4,
+        title: "Luminaria rota en el parque",
+        likes: 18,
+        positiveVotes: 20,
+        negativeVotes: 2,
+        comments: [],
+      },
+      {
+        id: 3,
+        user: { name: "Luis García", avatar: "https://i.pravatar.cc/50?img=15" },
+        imageUrl: imagen3_4,
+        title: "Contenedor de basura desbordado",
+        likes: 25,
+        positiveVotes: 30,
+        negativeVotes: 3,
+        comments: [],
+      },
     ],
     votedPosts: {
       1: { up: true, down: false },
@@ -199,11 +219,6 @@ export default function storeReducer(store, action = {}) {
             },
           },
         };
-    case 'LOAD_REPORTS':
-      return {
-        ...store,
-        posts: action.payload
-      };
 
   
     default:

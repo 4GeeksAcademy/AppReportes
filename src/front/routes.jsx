@@ -28,6 +28,7 @@ import { GestionarUsuarios } from "./pages/GestionarUsuarios";
 // import { BuscadorAdmin } from "./pages/BuscadorAdmin";
 // import {RootRedirect} from "./components/RootRedirect";
 import { Loader } from "./components/Loader";
+import { ReportesDeUsuario } from "./pages/ReportesDeUsuario";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -43,6 +44,8 @@ export const router = createBrowserRouter(
       <Route path="mis-reportes" element={<MisReportes />} />
       <Route path="favoritos" element={<Favoritos />} />
       <Route path="reporte" element={<Reporte />} />
+      <Route path="/users/:id/reportes" element={<ReportesDeUsuario />} />
+
 
       <Route path="moderador" element={<HomeModerador />} />
       <Route path="denuncias" element={<Denuncias />} />
