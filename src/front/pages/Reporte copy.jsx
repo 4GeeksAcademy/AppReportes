@@ -50,7 +50,6 @@ export const Reporte = () => {
       const res = await fetch(`${BACKEND_URL}/api/reportes/${id}`);
       if (!res.ok) throw new Error("No se pudo cargar el reporte");
       const data = await res.json();
-      console.log(data.comments)
 
       dispatch({
         type: "SET_REPORTE",
@@ -66,16 +65,12 @@ export const Reporte = () => {
           },
           positiveVotes: data.votes?.filter((v) => v.is_upvote).length || 0,
           negativeVotes: data.votes?.filter((v) => !v.is_upvote).length || 0,
-          comentarios: data.comments?.map((c) => ({
-          id: c.id,
-          texto: c.comment_text,
-          usuario: {
-            id: c.usuario?.id,
-            fullname: c.usuario?.fullname || "Usuario"
-          }
-        })) || []
-
-          ,
+          comentarios:
+            data.comments?.map((c) => ({
+              id: c.id,
+              usuario: c.autor,
+              texto: c.comment_text,
+            })) || [],
         },
       });
     } catch (err) {
@@ -313,16 +308,15 @@ const eliminarComentario = async (commentId) => {
 
 
   useEffect(() => {
+    // console.log(" id del reporte:", id);
     fetchReporte();
     fetchUserFavorites();
     fetchUserVotes();
-    fetchCurrentUserBackendId(); 
+    fetchCurrentUserBackendId(); // 👈 Agregado aquí
+    console.log(currentUserId)
+    console.log("Comentarios del store:", store.reporte.comentarios);
+
   }, [id]);
-
-  useEffect(() => {
-    console.log("🧑 ID usuario actual:", currentUserId);
-  }, [currentUserId]);
-
 
 
 
@@ -543,46 +537,50 @@ const eliminarComentario = async (commentId) => {
               </button>
             </div>
 
-            {store.reporte.comentarios.map(({ id: commentId, usuario, texto }) => (
-              <div key={commentId} className="mb-3 d-flex justify-content-between align-items-start">
-                <div>
-                  <strong>{usuario.fullname}:</strong> <span>{texto}</span>
+            {store.reporte.comentarios.length > 0 ? (
+              store.reporte.comentarios.map(({ id: commentId, usuario, texto }) => (
+                <div key={commentId} className="mb-3 d-flex justify-content-between align-items-start">
+                  <div>
+                    <strong>{usuario}:</strong> <span>{texto}</span>
+                    
+                  </div>
+                  
+                  {Number(usuario?.id) === Number(currentUserId) ? (
+                    <button
+                      className="btn btn-sm px-2 py-1 ms-2"
+                      onClick={() => eliminarComentario(commentId)}
+                      style={{
+                        background: "rgba(255, 0, 0, 0.3)",
+                        color: "white",
+                        fontSize: "0.75rem",
+                        borderRadius: "0.5rem",
+                        backdropFilter: "blur(5px)",
+                      }}
+                      title="Eliminar mi comentario"
+                    >
+                      🗑️
+                    </button>
+                  ) : (
+                    <button
+                      className="btn btn-sm px-2 py-1 ms-2"
+                      onClick={() => abrirModalDenuncia("comentario", commentId)}
+                      style={{
+                        background: "rgba(255, 80, 80, 0.15)",
+                        color: "white",
+                        fontSize: "0.75rem",
+                        borderRadius: "0.5rem",
+                        backdropFilter: "blur(5px)",
+                      }}
+                      title={`Denunciar comentario de ${usuario.fullname || "usuario"}`}
+                    >
+                      🚩
+                    </button>
+                  )}
                 </div>
-
-                {Number(usuario.id) === Number(currentUserId) ? (
-                  <button
-                    className="btn btn-sm px-2 py-1 ms-2"
-                    onClick={() => eliminarComentario(commentId)}
-                    style={{
-                      background: "rgba(255, 0, 0, 0.3)",
-                      color: "white",
-                      fontSize: "0.75rem",
-                      borderRadius: "0.5rem",
-                      backdropFilter: "blur(5px)",
-                    }}
-                    title="Eliminar mi comentario"
-                  >
-                    🗑️
-                  </button>
-                ) : (
-                  <button
-                    className="btn btn-sm px-2 py-1 ms-2"
-                    onClick={() => abrirModalDenuncia("comentario", commentId)}
-                    style={{
-                      background: "rgba(255, 80, 80, 0.15)",
-                      color: "white",
-                      fontSize: "0.75rem",
-                      borderRadius: "0.5rem",
-                      backdropFilter: "blur(5px)",
-                    }}
-                    title="Denunciar comentario"
-                  >
-                    🚩
-                  </button>
-                )}
-              </div>
-            ))}
-
+              ))
+            ) : (
+              <p className="text-white-50">No hay comentarios todavía.</p>
+            )}
           </div>
         </div>
       </div>

@@ -21,10 +21,26 @@ class User(db.Model):
     favorites: Mapped[List["Favorite"]] = relationship("Favorite", back_populates="user", cascade="all, delete-orphan")
     votes: Mapped[List["Vote"]] = relationship("Vote", back_populates="user", cascade="all, delete-orphan")
 
-    # Relaciones con denuncias y sanciones
-    denuncias_realizadas = relationship("Denuncia", foreign_keys="[Denuncia.denunciante_id]", back_populates="denunciante")
-    denuncias_recibidas = relationship("Denuncia", foreign_keys="[Denuncia.denunciado_id]", back_populates="denunciado")
-    sanciones = relationship("Sancion", back_populates="user", cascade="all, delete-orphan")
+    # Relaciones con denuncias y sanciones, ahora con cascade
+    denuncias_realizadas = relationship(
+        "Denuncia",
+        foreign_keys="[Denuncia.denunciante_id]",
+        back_populates="denunciante",
+        cascade="all, delete-orphan"
+    )
+
+    denuncias_recibidas = relationship(
+        "Denuncia",
+        foreign_keys="[Denuncia.denunciado_id]",
+        back_populates="denunciado",
+        cascade="all, delete-orphan"
+    )
+
+    sanciones = relationship(
+        "Sancion",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
 
     def serialize(self):
         return {
@@ -36,6 +52,7 @@ class User(db.Model):
             "isActive": self.is_active,
             "is_moderator": self.is_moderator
         }
+
 
 class Reporte(db.Model):
     __tablename__ = "reportes"
@@ -97,7 +114,10 @@ class Comment(db.Model):
         return {
             "id": self.id,
             "comment_text": self.comment_text,
-            "autor": self.author.fullname if self.author else None
+            "usuario": {
+                "id": self.author_id,
+                "fullname": self.author.fullname if self.author else None
+            } if self.author else None,
         }
 
 class Favorite(db.Model):

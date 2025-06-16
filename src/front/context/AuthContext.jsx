@@ -13,9 +13,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser || null);
-      setUserBackend(null); // Limpiar datos anteriores
+      // setUserBackend(null); // Limpiar datos anteriores
 
-      if (firebaseUser) {
+      if (firebaseUser && !userBackend) {
         try {
           const token = await firebaseUser.getIdToken();
 

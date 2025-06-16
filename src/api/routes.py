@@ -157,6 +157,8 @@ def delete_user(id):
 
     # 3. Eliminar de Firebase Authentication (ahora también si eres moderador)
     try:
+        print(f"Eliminando usuario con UID: {user.user_id}")
+
         auth.delete_user(user.user_id)  # Eliminamos usando el Firebase UID del usuario objetivo
     except Exception as e:
         return jsonify({"error": f"Error al eliminar en Firebase: {str(e)}"}), 500

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getAuth } from "firebase/auth";
+import { useNavigate } from "react-router-dom"; // 👈 Asegúrate de tener react-router-dom instalado
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -9,6 +10,7 @@ export const MisDatos = () => {
   const [fotoPerfilUrl, setFotoPerfilUrl] = useState("");
   const [userId, setUserId] = useState(null);
   const [mensaje, setMensaje] = useState("");
+  const navigate = useNavigate();
 
   const subirImagenACloudinary = async (file) => {
     const formData = new FormData();
@@ -21,7 +23,7 @@ export const MisDatos = () => {
     });
 
     const data = await res.json();
-    return data.secure_url; // URL pública de la imagen
+    return data.secure_url;
   };
 
   const getToken = async () => {
@@ -56,12 +58,9 @@ export const MisDatos = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     const token = await getToken();
-
     let imagenUrl = fotoPerfilUrl;
 
-    // ✅ Subir imagen si el usuario ha seleccionado una nueva
     if (fotoPerfil) {
       try {
         imagenUrl = await subirImagenACloudinary(fotoPerfil);
@@ -88,7 +87,6 @@ export const MisDatos = () => {
       });
 
       const result = await response.json();
-
       if (response.ok) {
         setMensaje("Perfil actualizado correctamente");
       } else {
@@ -96,6 +94,36 @@ export const MisDatos = () => {
       }
     } catch (error) {
       setMensaje("Error en la conexión");
+    }
+  };
+
+  // 🔴 Botón Eliminar Cuenta
+  const handleEliminarCuenta = async () => {
+    const confirmacion = window.confirm("¿Estás seguro de que deseas eliminar tu cuenta? Esta acción no se puede deshacer.");
+    if (!confirmacion) return;
+
+    try {
+      const token = await getToken();
+      const response = await fetch(`${BACKEND_URL}/api/user/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Cerrar sesión en Firebase
+        const auth = getAuth();
+        await auth.signOut();
+        alert("Cuenta eliminada correctamente.");
+        navigate("/signup"); // o redirige a la home
+      } else {
+        alert(data.error || "Error al eliminar la cuenta");
+      }
+    } catch (error) {
+      alert("Error al intentar eliminar la cuenta");
     }
   };
 
@@ -117,7 +145,6 @@ export const MisDatos = () => {
           </h2>
 
           <form onSubmit={handleSubmit}>
-            {/* Nombre */}
             <div className="mb-3">
               <label htmlFor="nombre" className="form-label">
                 Nombre
@@ -133,7 +160,6 @@ export const MisDatos = () => {
               />
             </div>
 
-            {/* Foto de perfil */}
             <div className="mb-3">
               <div className="d-flex align-items-center justify-content-between mb-2">
                 <label htmlFor="fotoPerfil" className="form-label mb-0">
@@ -163,7 +189,7 @@ export const MisDatos = () => {
             </div>
 
             {/* Cambiar contraseña */}
-            <div className="mb-4">
+            <div className="mb-2">
               <button
                 type="button"
                 className="btn w-100 rounded-pill"
@@ -174,6 +200,22 @@ export const MisDatos = () => {
                 }}
               >
                 Cambiar contraseña
+              </button>
+            </div>
+
+            {/* 🔴 Eliminar cuenta */}
+            <div className="mb-4">
+              <button
+                type="button"
+                className="btn w-100 rounded-pill"
+                style={{
+                  backgroundColor: "#cc0000",
+                  color: "white",
+                  border: "none",
+                }}
+                onClick={handleEliminarCuenta}
+              >
+                Eliminar cuenta
               </button>
             </div>
 
@@ -200,7 +242,6 @@ export const MisDatos = () => {
             </div>
           </form>
 
-          {/* Mensaje */}
           {mensaje && (
             <div className="mt-3 alert alert-info" role="alert">
               {mensaje}

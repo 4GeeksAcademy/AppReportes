@@ -22,14 +22,16 @@ import { Favoritos } from "./pages/Favoritos";
 import { Reporte } from "./pages/Reporte";
 import { HomeModerador } from "./pages/HomeModerador";
 import { Denuncias } from "./pages/Denuncias";
-import { UsuariosSancionados } from "./pages/Sancionados";
+import { UsuariosSancionados } from "./pages/UsuariosSancionados";
 import { BuscadorModerador } from "./pages/BuscadorModerador";
-import { GestionarUsuarios } from "./pages/GestionarUsuarios";
+import { GestionarModeradores } from "./pages/GestionarModeradores";
 // import { BuscadorAdmin } from "./pages/BuscadorAdmin";
 import {RootRedirect} from "./components/RootRedirect";
 import { Loader } from "./components/Loader";
 import { ReportesDeUsuario } from "./pages/ReportesDeUsuario";
-import {PrivateRoutes} from "./components/PrivateRoutes";
+import { PrivateRoutes } from "./components/PrivateRoutes";
+import { EditarReporte } from "./pages/EditarReporte";
+import { RankingReportes } from "./pages/RankingReportes";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -42,6 +44,7 @@ export const router = createBrowserRouter(
       <Route  element={<PrivateRoutes/>}>
         <Route path="feed" element={<Feed />} /> 
         <Route path="subir-reporte" element={<SubirReporte />} />
+        <Route path="editar-reporte/:id" element={<EditarReporte />} />
         <Route path="mis-datos" element={<MisDatos />} />
         <Route path="mis-reportes" element={<MisReportes />} />
         <Route path="favoritos" element={<Favoritos />} />
@@ -50,8 +53,10 @@ export const router = createBrowserRouter(
         <Route path="moderador" element={<HomeModerador />} />
         <Route path="denuncias" element={<Denuncias />} />
         <Route path="usuarios-sancionados" element={<UsuariosSancionados />} />
+        <Route path="ranking-reportes" element={<RankingReportes />} />
+        <Route path="gestionar-moderadores" element={<GestionarModeradores />} />
         <Route path="buscador-moderador" element={<BuscadorModerador />} />
-        <Route path="gestionar-usuarios" element={<GestionarUsuarios />} />
+
       </Route>
     
     </Route>
