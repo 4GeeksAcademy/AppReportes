@@ -97,7 +97,7 @@ def make_moderator():
 
     return jsonify({"msg": f"El usuario {email} ahora es moderador"}), 200
 
-#obtener todos los usuarios (solo moderadores)
+# obtener todos los usuarios (solo moderadores)
 @api.route("/users", methods=["GET"])
 @jwt_required()
 def list_users():
@@ -114,7 +114,7 @@ def list_users():
     
     return jsonify(user_list), 200
 
-#obtener usuario en concreto (moderadores incluidos)
+# obtener usuario en concreto (moderadores incluidos)
 @api.route("/user/<int:id>", methods=["GET"])
 @jwt_required()
 def get_user(id):
@@ -135,7 +135,7 @@ def get_user(id):
 
     return jsonify(user.serialize()), 200
 
-#borrar usuario (moderadores incluidos)
+# borrar usuario (moderadores incluidos)
 @api.route("/user/<int:id>", methods=["DELETE"])
 @jwt_required()
 def delete_user(id):
@@ -167,7 +167,7 @@ def delete_user(id):
 
     return jsonify({"msg": "Usuario eliminado correctamente"}), 200
 
-# editar datos de usuario (moderadores incluidos, comprobar)
+# editar datos de usuario (moderadores incluidos, comprobado)
 @api.route("/user/<int:id>", methods=["PUT"])
 @jwt_required()
 def update_user(id):
@@ -196,6 +196,8 @@ def update_user(id):
     db.session.commit()
 
     return jsonify({"msg": "Perfil actualizado correctamente", "user": user.serialize()}), 200
+
+
 
 # un usuario crea un reporte (tiene que estar logueado, pero no hay que poner id por esta misma razon)
 @api.route('/reportes', methods=['POST'])
@@ -395,7 +397,7 @@ def delete_comment(comment_id):
     return jsonify({"msg": "Comentario eliminado correctamente"}), 200
 
 # poner o quitar post de favoritos (o dar like)
-@api.route('/reportes/<int:reporte_id>/like', methods=['POST'])
+@api.route('/reportes/<int:reporte_id>/favorito', methods=['POST'])
 @jwt_required()
 def toggle_favorite(reporte_id):
     current = get_current_user()
@@ -413,8 +415,46 @@ def toggle_favorite(reporte_id):
     db.session.commit()
     return jsonify({"msg": "Agregado a favoritos"}), 201
 
-# ver likes
-@api.route('/reportes/<int:reporte_id>/likes', methods=['GET'])
+
+# ver mis favoritos
+@api.route('/reportes/favoritos', methods=['GET'])
+@jwt_required()
+def get_user_favorites():
+    current = get_current_user()
+    db_user = current["database"]
+
+    favoritos = Favorite.query.filter_by(user_id=db_user["id"]).all()
+    reporte_ids = [fav.reporte_id for fav in favoritos]
+
+    return jsonify(reporte_ids), 200
+
+# ver los reportes de otro usuario que he marcado como favoritos (implementado)
+@api.route("/users/<int:user_id>/favoritos", methods=["GET"])
+@jwt_required()
+def get_favoritos_en_reportes_de(user_id):
+    current_user = get_current_user()
+    current_user_id = current_user["database"]["id"]
+
+    if not current_user_id:
+        return jsonify({"error": "ID de usuario inválido"}), 400
+
+    # Buscar favoritos hechos por el usuario logueado
+    favorites = Favorite.query.filter_by(user_id=current_user_id).all()
+
+    # Filtrar solo los favoritos que apuntan a reportes hechos por user_id
+    reportes_favoritos_de_ese_usuario = [
+        fav.reporte.serialize()
+        for fav in favorites
+        if fav.reporte and fav.reporte.author_id == user_id
+    ]
+
+    return jsonify({"likes": reportes_favoritos_de_ese_usuario}), 200
+
+
+
+
+# ver likes de un reporte (creo que mejor no, solamente guardarlo como favorito y ya)
+@api.route('/reportes/<int:reporte_id>/favoritos', methods=['GET'])
 def get_favorites(reporte_id):
     count = Favorite.query.filter_by(reporte_id=reporte_id).count()
     return jsonify({"reporte_id": reporte_id, "favorites": count}), 200
@@ -479,6 +519,27 @@ def get_votes(reporte_id):
         "downvotes": downvotes
     }), 200
 
+# Obtener todos los votos del usuario autenticado
+@api.route('/reportes/mis-votos', methods=['GET'])
+@jwt_required()
+def get_user_votes():
+    current = get_current_user()
+    db_user = current["database"]
+
+    votos = Vote.query.filter_by(user_id=db_user["id"]).all()
+
+    result = [
+        {
+            "reporte_id": voto.reporte_id,
+            "is_upvote": voto.is_upvote
+        }
+        for voto in votos
+    ]
+
+    return jsonify(result), 200
+
+
+
 # banear usuarios (solo moderadores, comprobar)
 
 @api.route("/user/<int:id>/ban", methods=["PUT"])
@@ -519,38 +580,59 @@ def ban_user(id):
 def create_denuncia():
     current = get_current_user()
     db_user = current["database"]
+    denunciante_id = db_user["id"]  # Este es el integer ID para la FK
 
     data = request.get_json()
     motivo = data.get("motivo")
     reporte_id = data.get("reporte_id")
     comment_id = data.get("comment_id")
 
-    # Validación básica
     if not motivo:
-        return jsonify({"error": "El motivo es obligatorio"}), 400
+        return jsonify({"error": "Debes proporcionar un motivo"}), 400
 
-    # Debe denunciar un reporte o un comentario, no ambos a la vez
-    if (not reporte_id and not comment_id) or (reporte_id and comment_id):
-        return jsonify({"error": "Debes especificar un reporte o un comentario, pero no ambos"}), 400
+    if not reporte_id and not comment_id:
+        return jsonify({"error": "Debes especificar un reporte o un comentario"}), 400
 
-    # Verificar que el reporte o comentario exista
-    if reporte_id and not Reporte.query.get(reporte_id):
-        return jsonify({"error": "Reporte no encontrado"}), 404
-    if comment_id and not Comment.query.get(comment_id):
-        return jsonify({"error": "Comentario no encontrado"}), 404
+    if reporte_id and comment_id:
+        return jsonify({"error": "Debes especificar solo uno: reporte o comentario"}), 400
 
-    denuncia = Denuncia(
-        reporter_id=db_user["id"],
+    denunciado_id = None
+
+    if reporte_id:
+        reporte = Reporte.query.get(reporte_id)
+        if not reporte:
+            return jsonify({"error": "Reporte no encontrado"}), 404
+        denunciado_id = reporte.author_id
+
+    elif comment_id:
+        comentario = Comment.query.get(comment_id)
+        if not comentario:
+            return jsonify({"error": "Comentario no encontrado"}), 404
+        denunciado_id = comentario.author_id
+
+    if denunciante_id == denunciado_id:
+        return jsonify({"error": "No puedes denunciarte a ti mismo"}), 400
+
+    nueva_denuncia = Denuncia(
+        denunciante_id=denunciante_id,
+        denunciado_id=denunciado_id,
         reporte_id=reporte_id,
         comment_id=comment_id,
         motivo=motivo,
-        status="pendiente",
+        status="pendiente"
     )
 
-    db.session.add(denuncia)
+    db.session.add(nueva_denuncia)
     db.session.commit()
 
-    return jsonify({"msg": "Denuncia creada", "denuncia": denuncia.serialize()}), 201
+    return jsonify({
+        "msg": "Denuncia creada correctamente",
+        "denuncia": nueva_denuncia.serialize()
+    }), 201
+
+
+
+
 
 # obtener todas las denuncias (moderadores solo)
 @api.route('/denuncias', methods=['GET'])

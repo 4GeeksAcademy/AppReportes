@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { getAuth } from "firebase/auth";
+import { useParams } from "react-router-dom";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+import useGlobalReducer from "../hooks/useGlobalReducer";
 import corazonVacio from "../assets/img/corazon_vacio.png";
-import corazonVacioNegro from "../assets/img/corazon_vacio_negro.png";
 
 export const ReportesDeUsuario = () => {
   const { id } = useParams();
@@ -11,15 +10,13 @@ export const ReportesDeUsuario = () => {
   const [likedPosts, setLikedPosts] = useState([]);
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("publicaciones");
-  const navigate = useNavigate();
+  const { store } = useGlobalReducer();
 
-  // Carga reportes del usuario
   const fetchUserReports = async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/api/users/${id}/reportes`);
-      if (!res.ok) throw new Error(`Error en reportes del usuario: ${res.status}`);
+      if (!res.ok) throw new Error("Error en reportes del usuario");
       const data = await res.json();
 
       const mappedPosts = data.reports.map((reporte) => ({
@@ -37,34 +34,27 @@ export const ReportesDeUsuario = () => {
       }));
 
       setPosts(mappedPosts);
-      setUsername(data.user.fullname || "Usuario");
+      setUsername(data.user.fullname);
     } catch (error) {
-      setError(error.message);
+      console.error("Error al cargar reportes:", error);
     }
   };
 
-  // Carga reportes que le gustan al usuario
   const fetchLikedReports = async () => {
     try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-
-      if (!user) throw new Error("No hay usuario autenticado");
-
-      const token = await user.getIdToken();
-
+      const token = store?.jwt;
       const res = await fetch(`${BACKEND_URL}/api/users/${id}/favoritos`, {
         headers: {
           Authorization: "Bearer " + token,
         },
       });
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Error en favoritos del usuario: ${res.status} - ${text}`);
-      }
-
       const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Respuesta no válida:", data);
+        throw new Error("Error en favoritos del usuario");
+      }
 
       const mappedLiked = data.likes.map((reporte) => ({
         id: reporte.id,
@@ -78,73 +68,32 @@ export const ReportesDeUsuario = () => {
           name: reporte.author?.fullname || "Desconocido",
           avatar:
             reporte.author?.profile_picture ||
-            reporte.author?.propile_picture || // typo fallback
+            reporte.author?.propile_picture || // fallback por el typo
             "https://i.pravatar.cc/50",
         },
       }));
 
       setLikedPosts(mappedLiked);
     } catch (error) {
-      setError(error.message);
+      console.error("Error al cargar reportes favoritos:", error);
     }
   };
 
   useEffect(() => {
     const loadAll = async () => {
       setLoading(true);
-      setError(null);
       await fetchUserReports();
       await fetchLikedReports();
       setLoading(false);
     };
-    if (id) loadAll();
+    loadAll();
   }, [id]);
-
-  // Función para togglear el favorito (quitar de likedPosts)
-  const toggleLike = async (postId, e) => {
-    e.stopPropagation(); // para que no dispare el onClick de la imagen
-    try {
-      const auth = getAuth();
-      const user = auth.currentUser;
-      if (!user) throw new Error("No hay usuario autenticado");
-
-      const token = await user.getIdToken();
-
-      const res = await fetch(`${BACKEND_URL}/api/reportes/${postId}/favorito`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) throw new Error("Error al cambiar favorito");
-
-      // Actualizar likedPosts removiendo o agregando el post
-      setLikedPosts((prev) => {
-        const exists = prev.find((p) => p.id === postId);
-        if (exists) {
-          // Si ya existe, removerlo
-          return prev.filter((p) => p.id !== postId);
-        } else {
-          // Si no existe, (opcional) puedes añadirlo aquí si quieres
-          return prev;
-        }
-      });
-    } catch (error) {
-      console.error("Error al cambiar estado de favorito:", error);
-    }
-  };
-
-  // Función para ir a detalle del reporte, ruta igual que Favoritos.jsx
-  const goToDetail = (postId) => {
-    navigate(`/reporte/${postId}`);
-  };
 
   const postsToRender = activeTab === "publicaciones" ? posts : likedPosts;
 
   return (
     <div className="container py-4" style={{ maxWidth: 600 }}>
+      {/* Nombre del usuario */}
       <div
         className="p-3 mb-3 text-white"
         style={{
@@ -159,6 +108,7 @@ export const ReportesDeUsuario = () => {
         {username}
       </div>
 
+      {/* Pestañas */}
       <div className="d-flex justify-content-center gap-3 mb-3">
         <button
           className={`btn ${
@@ -178,21 +128,14 @@ export const ReportesDeUsuario = () => {
         </button>
       </div>
 
-      {loading && <p className="text-center text-muted">Cargando reportes...</p>}
-
-      {error && (
-        <p className="text-center text-danger" style={{ whiteSpace: "pre-wrap" }}>
-          {error}
-        </p>
-      )}
-
-      {!loading && !error && postsToRender.length === 0 && (
+      {/* Contenido */}
+      {loading ? (
+        <p className="text-center text-muted">Cargando reportes...</p>
+      ) : postsToRender.length === 0 ? (
         <p className="text-center text-muted">
           No hay {activeTab === "publicaciones" ? "publicaciones" : "me gustas"} para este usuario.
         </p>
-      )}
-
-      {!loading && !error && postsToRender.length > 0 && (
+      ) : (
         <div className="row g-2">
           {postsToRender.map((post) => (
             <div key={post.id} className="col-6 col-md-3 position-relative">
@@ -203,9 +146,7 @@ export const ReportesDeUsuario = () => {
                   overflow: "hidden",
                   borderRadius: "10px",
                   position: "relative",
-                  cursor: "pointer",
                 }}
-                onClick={() => goToDetail(post.id)}
               >
                 <img
                   src={post.imageUrl}
@@ -215,20 +156,18 @@ export const ReportesDeUsuario = () => {
                 />
                 {activeTab === "megustan" && (
                   <img
-                    src={corazonVacioNegro}
+                    src={corazonVacio}
                     alt="favorito"
                     style={{
                       position: "absolute",
                       top: "8px",
                       right: "8px",
-                      width: "24px",
-                      height: "24px",
-                      backgroundColor: "rgba(255,255,255,0.8)",
+                      width: "20px",
+                      height: "20px",
+                      backgroundColor: "rgba(255,255,255,0.6)",
                       borderRadius: "50%",
                       padding: "4px",
-                      cursor: "pointer",
                     }}
-                    onClick={(e) => toggleLike(post.id, e)}
                   />
                 )}
               </div>

@@ -10,7 +10,7 @@ class User(db.Model):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)  # Firebase UID
-    fullname: Mapped[str] = mapped_column(String(300), nullable=False)
+    fullname: Mapped[str] = mapped_column(String(20), nullable=False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     profile_picture: Mapped[str] = mapped_column(String(300), nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True)
@@ -32,7 +32,7 @@ class User(db.Model):
             "fullname": self.fullname,
             "firebase_uid": self.user_id,
             "email": self.email,
-            "propile_picture": self.profile_picture,
+            "profile_picture": self.profile_picture,
             "isActive": self.is_active,
             "is_moderator": self.is_moderator
         }
@@ -96,7 +96,8 @@ class Comment(db.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "comment_text": self.comment_text
+            "comment_text": self.comment_text,
+            "autor": self.author.fullname if self.author else None
         }
 
 class Favorite(db.Model):

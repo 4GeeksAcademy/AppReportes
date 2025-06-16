@@ -1,18 +1,32 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import imagen3_4 from "../assets/img/city_fondo_3_4.jpg";
 import corazonVacio from "../assets/img/corazon_vacio.png";
 import corazonVacioNegro from "../assets/img/corazon_vacio_negro.png";
 import useGlobalReducer from "../hooks/useGlobalReducer";
+import { getAuth } from "firebase/auth";
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const Feed = () => {
   const [likedPosts, setLikedPosts] = useState({});
   const { store, dispatch } = useGlobalReducer();
+  const [votedPosts, setVotedPosts] = useState({});
+  const navigate = useNavigate();
+
+  // 🔐 Obtener token actual de Firebase
+  const getToken = async () => {
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) return null;
+    return await user.getIdToken();
+  };
+
   const fetchReports = async () => {
     try {
       const res = await fetch(`${BACKEND_URL}/api/reportes`);
       const data = await res.json();
+      // console.log(data)
 
       const mappedPosts = data.map((reporte) => ({
         id: reporte.id,
@@ -24,7 +38,7 @@ export const Feed = () => {
         user: {
           id: reporte.author?.id,
           name: reporte.author?.fullname || "Anónimo",
-          avatar: reporte.author?.propile_picture || "https://i.pravatar.cc/50",
+          avatar: reporte.author?.profile_picture || "https://i.pravatar.cc/50",
         },
       }));
 
@@ -33,16 +47,118 @@ export const Feed = () => {
       console.error("Error al obtener reportes:", error);
     }
   };
+
+  const fetchUserFavorites = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const res = await fetch(`${BACKEND_URL}/api/reportes/favoritos`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Error al obtener favoritos");
+
+      const favoriteIds = await res.json(); // [1, 3, 5]
+      const likedMap = {};
+      favoriteIds.forEach((id) => {
+        likedMap[id] = true;
+      });
+      setLikedPosts(likedMap);
+    } catch (error) {
+      console.error("Error al obtener favoritos:", error);
+    }
+  };
+
+  const toggleLike = async (postId) => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const isLiked = likedPosts[postId];
+
+      const res = await fetch(
+        `${BACKEND_URL}/api/reportes/${postId}/favorito`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!res.ok) throw new Error("Error al cambiar favorito");
+
+      setLikedPosts((prev) => ({
+        ...prev,
+        [postId]: !isLiked,
+      }));
+    } catch (error) {
+      console.error("Error al cambiar estado de favorito:", error);
+    }
+  };
+
+  const fetchUserVotes = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const res = await fetch(`${BACKEND_URL}/api/reportes/mis-votos`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Error al obtener votos");
+
+      const data = await res.json(); // [{ reporte_id: 1, is_upvote: true }, ...]
+
+      const votesMap = {};
+      data.forEach(({ reporte_id, is_upvote }) => {
+        votesMap[reporte_id] = {
+          up: is_upvote,
+          down: !is_upvote,
+        };
+      });
+
+      setVotedPosts(votesMap);
+    } catch (error) {
+      console.error("Error al obtener votos:", error);
+    }
+  };
+
+  const handleVote = async (postId, type) => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const endpoint = type === "upvote" ? "upvote" : "downvote";
+      const res = await fetch(`${BACKEND_URL}/api/reportes/${postId}/${endpoint}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error("Error al votar");
+
+      // Refrescar votos después de votar
+      fetchReports();
+      fetchUserVotes();
+    } catch (error) {
+      console.error("Error al votar:", error);
+    }
+  };
+
+
   useEffect(() => {
     fetchReports();
+    fetchUserFavorites();
+    fetchUserVotes();
   }, []);
-
-  const toggleLike = (postId) => {
-    setLikedPosts((prev) => ({
-      ...prev,
-      [postId]: !prev[postId],
-    }));
-  };
 
   return (
     <div className="container py-4" style={{ maxWidth: 600 }}>
@@ -57,18 +173,19 @@ export const Feed = () => {
             style={{ background: "transparent" }}
           >
             <div className="position-relative">
-              <Link to="/reporte">
-                <img
-                  src={post.imageUrl}
-                  alt={post.title}
-                  className="w-100"
-                  style={{
-                    aspectRatio: "3/4",
-                    objectFit: "cover",
-                    borderRadius: "1rem",
-                  }}
-                />
-              </Link>
+              <img
+                src={post.imageUrl}
+                alt={post.title}
+                className="w-100"
+                style={{
+                aspectRatio: "3/4",
+                objectFit: "cover",
+                borderRadius: "1rem",
+                }}
+                onClick={() => navigate(`/reporte/${post.id}`)}
+                role="button"
+              />
+
 
               <Link
                 to={`/users/${post.user.id}/reportes`}
@@ -153,10 +270,11 @@ export const Feed = () => {
                 }}
               >
                 <button
+                  onClick={() => handleVote(post.id, "upvote")}
                   className="btn btn-sm"
                   style={{
                     whiteSpace: "nowrap",
-                    color: voted.up ? "white" : "lightgray",
+                    color: votedPosts[post.id]?.up ? "white" : "lightgray",
                     background: "rgba(255, 255, 255, 0.2)",
                     borderRadius: "50px",
                     backdropFilter: "blur(3px)",
@@ -166,10 +284,11 @@ export const Feed = () => {
                   Upvote {post.positiveVotes}
                 </button>
                 <button
+                  onClick={() => handleVote(post.id, "downvote")}
                   className="btn btn-sm"
                   style={{
                     whiteSpace: "nowrap",
-                    color: voted.down ? "white" : "lightgray",
+                    color: votedPosts[post.id]?.down ? "white" : "lightgray",
                     background: "rgba(255, 255, 255, 0.2)",
                     borderRadius: "50px",
                     backdropFilter: "blur(3px)",

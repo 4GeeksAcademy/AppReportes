@@ -133,7 +133,16 @@ export const initialStore=()=>{
         title: "Do my homework",
         background: null,
       }
-    ]
+    ],
+    reporte: {
+      titulo: "",
+      imagen: "",
+      descripcion: "",
+      usuario: { nombre: "", avatar: "" },
+      votosPositivos: 0,
+      votosNegativos: 0,
+      comentarios: [],
+    }
   }
 }
 
@@ -204,7 +213,11 @@ export default function storeReducer(store, action = {}) {
         ...store,
         posts: action.payload
       };
-
+    case "SET_REPORTE":
+      return {
+        ...store,
+        reporte: action.payload,
+      };
   
     default:
       return store;

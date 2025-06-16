@@ -20,7 +20,10 @@ export const FirebaseLogin = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
-      const idToken = await user.getIdToken();
+
+      const idToken = await user.getIdToken(); // ← Token de Firebase
+      console.log("🔥 Firebase ID Token:", idToken); // ← MOSTRAR EN CONSOLA
+
       const res = await authWithFirebase(idToken);
       alert("✅ Login exitoso");
       navigate("/feed");
@@ -30,11 +33,15 @@ export const FirebaseLogin = () => {
     }
   };
 
+
   const handleGoogleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
+
       const idToken = await user.getIdToken();
+      console.log("🔥 Firebase ID Token (Google):", idToken); // ← MOSTRAR EN CONSOLA
+
       const res = await authWithFirebase(idToken);
       alert("✅ Login con Google exitoso");
       res.user.is_moderator ? navigate("/moderador") : navigate("/feed");
@@ -43,6 +50,7 @@ export const FirebaseLogin = () => {
       alert("❌ Error con Google: " + error.message);
     }
   };
+
 
   return (
     <div
