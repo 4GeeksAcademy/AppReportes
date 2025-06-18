@@ -5,7 +5,7 @@ set -o errexit
 npm install
 npm run build
 
-pipenv install -r requirements.txt
+pipenv install
 
 # pipenv run migrate
 pipenv run upgrade
