@@ -1,5 +1,4 @@
 # api/firebase_admin_init.py
-
 from firebase_admin import auth as firebase_auth, auth
 
 # Exporta únicamente el módulo auth

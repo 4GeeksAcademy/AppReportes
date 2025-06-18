@@ -46,14 +46,21 @@ def firebase_auth():
 @api.route("/userinfo", methods=["GET"])
 @jwt_required()
 def user_info():
-    current_user = get_current_user()  # Esto te da el objeto retornado por user_lookup_loader
-    payload = get_jwt()  # Esto te da todos los claims originales del JWT
+    try:
+        current_user = get_current_user()  # Esto te da el objeto retornado por user_lookup_loader
+        payload = get_jwt()  # Esto te da todos los claims originales del JWT
 
-    return jsonify({
-        "user": current_user["database"],  # objeto serializado del usuario
-        "claims": current_user["tokenClaims"],  # info extendida del token
-        "raw_payload": payload  # por si querés ver todo el JWT crudo también
-    })
+        return jsonify({
+            "user": current_user["database"],  # objeto serializado del usuario
+            "claims": current_user["tokenClaims"],  # info extendida del token
+            "raw_payload": payload  # por si querés ver todo el JWT crudo también
+        })
+
+    except Exception as e:
+        # Loguea el error para debugging
+        print(f"Error en /userinfo: {e}")
+        # Devuelve un error 500 con un mensaje genérico (no dar detalles sensibles)
+        return jsonify({"error": "Error interno del servidor"}), 500
 
 @api.route('/hello', methods=['POST', 'GET'])
 def handle_hello():

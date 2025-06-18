@@ -28,16 +28,21 @@ export const FirebaseSignup = () => {
       );
       const user = userCredential.user;
 
+      // Actualizamos nombre y foto
       await updateProfile(user, {
         displayName: fullname,
         photoURL: defaultProfilePic,
       });
 
+      // Recargamos el usuario para que los datos se sincronicen
       await user.reload();
-      const updatedUser = auth.currentUser;
-      const idToken = await updatedUser.getIdToken(true);
 
-      const res = await authWithFirebase(idToken);
+
+      // Obtenemos un nuevo token con la info actualizada
+      const idToken = await user.getIdToken(true);
+
+      // Mandamos el token al backend
+      await authWithFirebase(idToken);
 
       alert("✅ Registro exitoso");
       navigate("/");
@@ -53,8 +58,11 @@ export const FirebaseSignup = () => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
+      // En Google no es necesario updateProfile ni reload, porque ya vienen
+      // displayName y photoURL en el token
       const idToken = await user.getIdToken();
-      const res = await authWithFirebase(idToken);
+
+      await authWithFirebase(idToken);
 
       alert("✅ Registro con Google exitoso");
       navigate("/");

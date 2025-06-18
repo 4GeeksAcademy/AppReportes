@@ -19,8 +19,10 @@ from firebase_admin import credentials
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 
+
 cred = credentials.Certificate(os.getenv("FIREBASE_ADMIN_KEY"))
 fb=firebase_admin.initialize_app(cred)
+
 
 
 # from models import Person
@@ -32,7 +34,7 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 
 CORS(app, supports_credentials=True, origins=[
-    "https://upgraded-rotary-phone-4j75jqj6p9jw3j6q4-3000.app.github.dev",
+    "https://glorious-meme-jj5vjrj9pqpp25769-3000.app.github.dev",
     "http://localhost:3000"
 ])
 ##### JWT Configuration
@@ -59,10 +61,11 @@ def decode_key_loader(jwt_headers, claims):
 
 @jwt_manager.user_lookup_loader
 def user_lookup_loader(jwt_headers, claims: dict):
+    print("🔥 JWT claims recibidos:", claims)  # 👈 Esto te muestra si 'name' está presente
     firebase_uid = claims.get("user_id")
     email = claims.get("email")
-    fullname = claims.get("name")
-    profile_picture = claims.get("picture", None)
+    fullname = claims.get("name") or claims.get("displayName") or claims.get("fullname")
+    profile_picture = claims.get("picture") or "https://example.com/default-profile.png"
 
     # Buscar en la base de datos si ya existe el usuario por UID o por email
     db_user = User.query.filter(
