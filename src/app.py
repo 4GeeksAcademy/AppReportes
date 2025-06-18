@@ -34,7 +34,7 @@ app = Flask(__name__)
 app.url_map.strict_slashes = False
 
 CORS(app, supports_credentials=True, origins=[
-    "https://glorious-meme-jj5vjrj9pqpp25769-3000.app.github.dev",
+    "https://super-waddle-r4gq474w5w9wfj9j-3000.app.github.dev/",
     "http://localhost:3000"
 ])
 ##### JWT Configuration
