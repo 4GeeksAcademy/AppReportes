@@ -32,6 +32,7 @@ import { ReportesDeUsuario } from "./pages/ReportesDeUsuario";
 import { PrivateRoutes } from "./components/PrivateRoutes";
 import { EditarReporte } from "./pages/EditarReporte";
 import { RankingReportes } from "./pages/RankingReportes";
+import { Eliminados } from "./pages/Eliminados";
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
@@ -53,6 +54,7 @@ export const router = createBrowserRouter(
         <Route path="moderador" element={<HomeModerador />} />
         <Route path="denuncias" element={<Denuncias />} />
         <Route path="usuarios-sancionados" element={<UsuariosSancionados />} />
+        <Route path="eliminados" element={<Eliminados />} />
         <Route path="ranking-reportes" element={<RankingReportes />} />
         <Route path="gestionar-moderadores" element={<GestionarModeradores />} />
         <Route path="buscador-moderador" element={<BuscadorModerador />} />

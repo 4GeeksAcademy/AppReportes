@@ -4,19 +4,19 @@ import { useNavigate } from "react-router-dom";
 export const HomeModerador = () => {
   const navigate = useNavigate();
 
-  const reportesPendientes = 12;
-  const usuariosSancionados = 42;
-
   const items = [
     {
       label: "📋 Denuncias pendientes",
-      value: reportesPendientes,
+
       link: "/denuncias",
     },
     {
       label: "⛔ Usuarios sancionados",
-      value: usuariosSancionados,
       link: "/usuarios-sancionados",
+    },
+    {
+      label: "🚫 Usuarios eliminados",
+      link: "/eliminados",
     },
     {
       label: "🆕 Ranking reportes",
@@ -44,7 +44,6 @@ export const HomeModerador = () => {
         {items.map((item, index) => {
           const isClickable = Boolean(item.link);
           const showValue = item.value !== undefined;
-          const isCentered = item.label.includes("Ranking reportes") || item.label.includes("Gestionar moderadores");
 
           return (
             <div
@@ -63,11 +62,9 @@ export const HomeModerador = () => {
                 cursor: isClickable ? "pointer" : "default",
                 userSelect: isClickable ? "none" : "auto",
                 transition: isClickable ? "background 0.3s ease" : undefined,
-                textAlign: isCentered ? "center" : "left",
+                textAlign: "center",
                 letterSpacing: "0.03em",
-                display: isCentered ? "block" : "flex",
-                justifyContent: isCentered ? "center" : "space-between",
-                alignItems: "center",
+                display: "block",
               }}
               onMouseEnter={(e) => {
                 if (isClickable)
@@ -79,7 +76,7 @@ export const HomeModerador = () => {
               }}
             >
               <span>{item.label}</span>
-              {showValue && <span>{item.value}</span>}
+              {showValue && <span> — {item.value}</span>}
             </div>
           );
         })}

@@ -2,7 +2,7 @@
 This module takes care of starting the API Server, Loading the DB and Adding the endpoints
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
-from api.models import db, User, Reporte, Media, Comment, Favorite, Vote, Denuncia, Sancion
+from api.models import db, User, Reporte, Media, Comment, Favorite, Vote, Denuncia, Sancion, Eliminado
 from api.utils import generate_sitemap, APIException
 from flask_cors import CORS
 from flask_bcrypt import Bcrypt
@@ -96,6 +96,28 @@ def make_moderator():
     db.session.commit()
 
     return jsonify({"msg": f"El usuario {email} ahora es moderador"}), 200
+
+# para eliminar moderadores
+@api.route("/remove-moderator", methods=["POST"])
+def remove_moderator():
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"error": "Email requerido"}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    if not user.is_moderator:
+        return jsonify({"msg": f"El usuario {email} ya no es moderador"}), 200
+
+    user.is_moderator = False
+    db.session.commit()
+
+    return jsonify({"msg": f"El usuario {email} ya no es moderador"}), 200
+
 
 # obtener todos los usuarios (solo moderadores)
 @api.route("/users", methods=["GET"])
@@ -665,31 +687,6 @@ def get_denuncia(id):
 
     return jsonify(denuncia.serialize()), 200
 
-# para cambiar el estado (moderadores solo)
-@api.route('/denuncias/<int:id>', methods=['PUT'])
-@jwt_required()
-def update_denuncia(id):
-    current = get_current_user()
-    db_user = current["database"]
-
-    if not db_user.get("is_moderator", False):
-        return jsonify({"error": "No autorizado"}), 403
-
-    denuncia = Denuncia.query.get(id)
-    if not denuncia:
-        return jsonify({"error": "Denuncia no encontrada"}), 404
-
-    data = request.get_json()
-    status = data.get("status")
-
-    if status not in ["pendiente", "revisado", "descartado"]:
-        return jsonify({"error": "Estado inválido"}), 400
-
-    denuncia.status = status
-    db.session.commit()
-
-    return jsonify({"msg": "Denuncia actualizada", "denuncia": denuncia.serialize()}), 200
-
 # delete denuncua (moderadores solo)
 @api.route('/denuncias/<int:id>', methods=['DELETE'])
 @jwt_required()
@@ -709,8 +706,7 @@ def delete_denuncia(id):
 
     return jsonify({"msg": "Denuncia eliminada"}), 200
 
-# crear sancion (solo moderadores)
-@api.route('/sanciones', methods=['POST'])
+@api.route('/sancion', methods=['POST'])
 @jwt_required()
 def create_sancion():
     current = get_current_user()
@@ -720,39 +716,35 @@ def create_sancion():
         return jsonify({"error": "No autorizado"}), 403
 
     data = request.get_json()
-    user_id = data.get("user_id")
-    motivo = data.get("motivo")
-    tipo = data.get("tipo")
-    fecha_fin_str = data.get("fecha_fin")  # opcional
 
-    if not user_id or not motivo or not tipo:
-        return jsonify({"error": "user_id, motivo y tipo son obligatorios"}), 400
+    user_id = data.get("user_id")
+    fullname = data.get("fullname")
+    motivo = data.get("motivo")
+    estado = data.get("estado")  # ejemplo: "baneado"
 
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "Usuario no encontrado"}), 404
 
-    fecha_fin = None
-    if fecha_fin_str:
-        try:
-            fecha_fin = datetime.fromisoformat(fecha_fin_str)
-        except ValueError:
-            return jsonify({"error": "fecha_fin debe ser ISO 8601"}), 400
-
+    # Crear sanción
     sancion = Sancion(
         user_id=user_id,
         motivo=motivo,
-        tipo=tipo,
-        fecha_fin=fecha_fin
+        estado=estado,
+        fullname=fullname
     )
 
+    # Actualizar estado del usuario (banned)
+    user.is_active = False  # o user.is_baneado = True si ese campo usas
+    user.is_moderator = False  # o user.is_baneado = True si ese campo usas
     db.session.add(sancion)
     db.session.commit()
 
-    return jsonify({"msg": "Sanción creada", "sancion": sancion.serialize()}), 201
+    return jsonify({"sancion": sancion.serialize()}), 201
+
 
 # listar sanciones (solo moderadores)
-@api.route('/sanciones', methods=['GET'])
+@api.route('/sancion', methods=['GET'])
 @jwt_required()
 def list_sanciones():
     current = get_current_user()
@@ -812,7 +804,7 @@ def update_sancion(id):
     return jsonify({"msg": "Sanción actualizada", "sancion": sancion.serialize()}), 200
 
 # eliminar sancion (solo moderadores)
-@api.route('/sanciones/<int:id>', methods=['DELETE'])
+@api.route('/sancion/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_sancion(id):
     current = get_current_user()
@@ -825,10 +817,93 @@ def delete_sancion(id):
     if not sancion:
         return jsonify({"error": "Sanción no encontrada"}), 404
 
+    # try:
+    #     auth.delete_user(user.user_id)
+    # except Exception as e:
+    #     return jsonify({"error": f"Error al eliminar en Firebase: {str(e)}"}), 500    
+
     db.session.delete(sancion)
     db.session.commit()
 
     return jsonify({"msg": "Sanción eliminada"}), 200
+
+#quitar ban
+@api.route('/quitarban', methods=['POST'])
+@jwt_required()
+def quitar_ban():
+    current = get_current_user()
+    db_user = current["database"]
+
+    if not db_user.get("is_moderator", False):
+        return jsonify({"error": "No autorizado"}), 403
+
+    data = request.get_json()
+    user_id = data.get("user_id")
+
+    if not user_id:
+        return jsonify({"error": "Falta user_id"}), 400
+
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "Usuario no encontrado"}), 404
+
+    # Quitar ban: activar usuario
+    user.is_active = True  # o el campo que uses para activar
+    db.session.add(user)
+
+    # Eliminar sanción (si tienes varias, filtra la correcta)
+    sancion = Sancion.query.filter_by(user_id=user_id).first()
+    if sancion:
+        db.session.delete(sancion)
+
+    db.session.commit()
+
+    return jsonify({"msg": "Ban quitado correctamente"}), 200
+
+
+
+
+# crear una linea en eliminados
+@api.route("/eliminados", methods=["POST"])
+@jwt_required()
+def crear_eliminado():
+    data = request.get_json()
+    fullname = data.get("fullname")
+    email = data.get("email")
+    motivo = data.get("motivo")
+
+    if not fullname or not email or not motivo:
+        return jsonify({"error": "Faltan campos fullname, email o motivo"}), 400
+
+    eliminado = Eliminado(
+        fullname=fullname,
+        email=email,
+        motivo=motivo
+    )
+    db.session.add(eliminado)
+    db.session.commit()
+
+    return jsonify({"msg": "Usuario eliminado registrado correctamente"}), 201
+
+# listar sanciones (solo moderadores)
+@api.route('/eliminados', methods=['GET'])
+@jwt_required()
+def list_eliminados():
+    current = get_current_user()
+    db_user = current["database"]
+
+    if not db_user.get("is_moderator", False):
+        return jsonify({"error": "No autorizado"}), 403
+
+    eliminados = Eliminado.query.all()
+    return jsonify([s.serialize() for s in eliminados]), 200
+
+
+
+
+
+
+
 
 
 # FIN ENDPOINTS MARTIN
