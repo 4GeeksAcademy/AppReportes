@@ -1,32 +1,78 @@
 import { useState } from "react";
-import cityFondo from "../assets/img/city_fondo3.jpg"; // mismo fondo
+import { getAuth } from "firebase/auth";
 
-const ReportForm = ({ onSubmit }) => {
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+const subirImagenACloudinary = async (file) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("upload_preset", "perfil_upload");
+
+  const res = await fetch("https://api.cloudinary.com/v1_1/dreejt5u8/image/upload", {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await res.json();
+  return data.secure_url;
+};
+
+const getToken = async () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+  if (!user) return null;
+  return await user.getIdToken();
+};
+
+const ReportForm = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [imageFile, setImageFile] = useState(null);
+  const [mensaje, setMensaje] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setMensaje("");
+
     if (!title.trim()) return alert("El título es obligatorio");
 
-    const newReport = {
-      id: Date.now(),
-      title,
-      description,
-      imageUrl,
-      currentUserId: "123",
-      likes: 0,
-      positiveVotes: 0,
-      negativeVotes: 0,
-      comments: [],
-    };
+    try {
+      const token = await getToken();
+      if (!token) {
+        setMensaje("Debes estar logueado para enviar un reporte");
+        return;
+      }
 
-    onSubmit(newReport);
+      let imageUrl = null;
+      if (imageFile) {
+        imageUrl = await subirImagenACloudinary(imageFile);
+      }
 
-    setTitle("");
-    setDescription("");
-    setImageUrl("");
+      const response = await fetch(`${BACKEND_URL}/api/reportes`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          titulo: title,
+          text: description,
+          image: imageUrl,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setTitle("");
+        setDescription("");
+        setImageFile(null);
+        setMensaje("Reporte enviado correctamente");
+      } else {
+        setMensaje(data.error || "Error al enviar el reporte");
+      }
+    } catch (error) {
+      setMensaje("Error en la conexión");
+    }
   };
 
   return (
@@ -68,13 +114,12 @@ const ReportForm = ({ onSubmit }) => {
       </div>
 
       <div className="mb-3">
-        <label className="form-label">URL de la imagen</label>
+        <label className="form-label">Imagen (opcional)</label>
         <input
-          type="url"
+          type="file"
           className="form-control"
-          value={imageUrl}
-          onChange={(e) => setImageUrl(e.target.value)}
-          placeholder="https://ejemplo.com/imagen.jpg"
+          accept="image/*"
+          onChange={(e) => setImageFile(e.target.files[0])}
           style={{
             backgroundColor: "rgba(255,255,255,0.1)",
             border: "none",
@@ -83,6 +128,12 @@ const ReportForm = ({ onSubmit }) => {
           }}
         />
       </div>
+
+      {mensaje && (
+        <div className="alert alert-info py-1 mt-3" role="alert">
+          {mensaje}
+        </div>
+      )}
 
       <button
         type="submit"
@@ -100,41 +151,7 @@ const ReportForm = ({ onSubmit }) => {
   );
 };
 
-const ReportCard = ({ report }) => {
-  return (
-    <div
-      className="card w-100"
-      style={{
-        background: "rgba(255, 255, 255, 0.06)",
-        backdropFilter: "blur(12px)",
-        borderRadius: "20px",
-        color: "white",
-        overflow: "hidden",
-      }}
-    >
-      {report.imageUrl && (
-        <img
-          src={report.imageUrl}
-          className="card-img-top"
-          alt={report.title}
-          style={{ objectFit: "cover", height: "180px" }}
-        />
-      )}
-      <div className="card-body">
-        <h5 className="card-title">{report.title}</h5>
-        <p className="card-text">{report.description}</p>
-      </div>
-    </div>
-  );
-};
-
 export const SubirReporte = () => {
-  const [reports, setReports] = useState([]);
-
-  const addReport = (newReport) => {
-    setReports((prev) => [newReport, ...prev]);
-  };
-
   return (
     <div
       className="d-flex justify-content-center"
@@ -143,8 +160,6 @@ export const SubirReporte = () => {
         paddingBottom: "5vh",
         fontFamily: "'Segoe UI', sans-serif",
         minHeight: "10vh",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
         color: "white",
       }}
     >
@@ -160,19 +175,7 @@ export const SubirReporte = () => {
       >
         <h3 className="text-center mb-4 fw-light">Subir un nuevo reporte</h3>
 
-        <ReportForm onSubmit={addReport} />
-
-        {reports.length === 0 ? (
-          <p className="text-center mt-4" style={{ color: "#ccc" }}>
-            Aún no hay reportes publicados.
-          </p>
-        ) : (
-          <div className="mt-4" style={{ maxHeight: "300px", overflowY: "auto" }}>
-            {reports.map((report) => (
-              <ReportCard key={report.id} report={report} />
-            ))}
-          </div>
-        )}
+        <ReportForm />
       </div>
     </div>
   );

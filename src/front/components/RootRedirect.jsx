@@ -1,19 +1,21 @@
 // pages/RootRedirect.jsx
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // 👈 Usamos el contexto
+import { useAuth } from "../context/AuthContext";
 
 export const RootRedirect = () => {
   const navigate = useNavigate();
-  const { user } = useAuth(); // 👈 Obtenemos el usuario del contexto
+  const { userBackend, loading } = useAuth();
 
   useEffect(() => {
-    if (user) {
+    if (loading) return;
+
+    if (userBackend) {
       navigate("/feed", { replace: true });
     } else {
       navigate("/firebase-login", { replace: true });
     }
-  }, [user, navigate]);
+  }, [userBackend, loading, navigate]);
 
-  return null; // no renderiza nada
+  return null;
 };

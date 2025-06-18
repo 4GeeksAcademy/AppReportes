@@ -1,14 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { signOut } from "firebase/auth";
+import { getAuth, signOut } from "firebase/auth";
 import { auth } from "../firebaseAuth";
+import { useAuth } from "../context/AuthContext";
 import logo from "../assets/img/beacon-sinfondo.png";
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const Navbar = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userId, setUserId] = useState(null);
+  const [isModerator, setIsModerator] = useState(false);
   const menuRef = useRef(null);
   const navRef = useRef(null);
 
@@ -21,6 +25,47 @@ export const Navbar = () => {
       console.error("Error al cerrar sesión:", error.message);
     }
   };
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const auth = getAuth();
+        const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+          if (!currentUser) {
+            console.warn("No hay usuario autenticado.");
+            setUserId(null);
+            setIsModerator(false);
+            return;
+          }
+
+          try {
+            const token = await currentUser.getIdToken();
+            const res = await fetch(`${BACKEND_URL}/api/userinfo`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (!res.ok) {
+              const text = await res.text();
+              console.error("Error al cargar /userinfo:", res.status, text);
+              return;
+            }
+
+            const data = await res.json();
+            setUserId(data.user.id);
+            setIsModerator(data.user.is_moderator === true);
+          } catch (error) {
+            console.error("Error al obtener userinfo:", error);
+          }
+        });
+
+        return () => unsubscribe();
+      } catch (error) {
+        console.error("Error al obtener userinfo:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -117,13 +162,16 @@ export const Navbar = () => {
             color: "white",
           }}
         >
-          <Link
-            to="/mis-reportes"
-            onClick={() => setMenuOpen(false)}
-            className="text-white text-decoration-none px-3 py-1 rounded hover-bg-secondary"
-          >
-            Mis reportes
-          </Link>
+          {userId && (
+            <Link
+              to={`/users/${userId}/reportes`}
+              onClick={() => setMenuOpen(false)}
+              className="text-white text-decoration-none px-3 py-1 rounded hover-bg-secondary"
+            >
+              Mis reportes
+            </Link>
+          )}
+
           <hr className="bg-secondary my-1" />
           <Link
             to="/favoritos"
@@ -140,6 +188,20 @@ export const Navbar = () => {
           >
             Mis datos
           </Link>
+
+          {isModerator && (
+            <>
+              <hr className="bg-secondary my-1" />
+              <Link
+                to="/moderador"
+                onClick={() => setMenuOpen(false)}
+                className="text-white text-decoration-none px-3 py-1 rounded hover-bg-secondary"
+              >
+                Moderador
+              </Link>
+            </>
+          )}
+
           <hr className="bg-secondary my-1" />
           <button
             onClick={handleLogout}

@@ -13,9 +13,9 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser || null);
-      setUserBackend(null); // Limpiar datos anteriores
+      // setUserBackend(null); // Limpiar datos anteriores
 
-      if (firebaseUser) {
+      if (firebaseUser && !userBackend) {
         try {
           const token = await firebaseUser.getIdToken();
 
@@ -28,7 +28,8 @@ export const AuthProvider = ({ children }) => {
           });
 
           if (!authRes.ok) {
-            console.error("Error en /firebase-auth:", await authRes.text());
+            const errorText = await authRes.text();
+            console.error("Error en /firebase-auth:", authRes.status, errorText);
             setUserBackend(null);
             setLoading(false);
             return;

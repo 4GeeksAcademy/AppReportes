@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams, useNavigate  } from "react-router-dom";
 import corazonVacio from "../assets/img/corazon_vacio.png";
 import corazonVacioNegro from "../assets/img/corazon_vacio_negro.png";
 import useGlobalReducer from "../hooks/useGlobalReducer";
@@ -17,7 +17,7 @@ export const Reporte = () => {
   const [liked, setLiked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [votedPosts, setVotedPosts] = useState({});
-
+  
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [reportModalTipo, setReportModalTipo] = useState("reporte"); // "reporte" o "comentario"
   const [reportModalComentarioId, setReportModalComentarioId] = useState(null);
@@ -50,7 +50,6 @@ export const Reporte = () => {
       const res = await fetch(`${BACKEND_URL}/api/reportes/${id}`);
       if (!res.ok) throw new Error("No se pudo cargar el reporte");
       const data = await res.json();
-      console.log(data.comments)
 
       dispatch({
         type: "SET_REPORTE",
@@ -66,16 +65,12 @@ export const Reporte = () => {
           },
           positiveVotes: data.votes?.filter((v) => v.is_upvote).length || 0,
           negativeVotes: data.votes?.filter((v) => !v.is_upvote).length || 0,
-          comentarios: data.comments?.map((c) => ({
-            id: c.id,
-            texto: c.comment_text,
-            usuario: {
-              id: c.usuario?.id,
-              fullname: c.usuario?.fullname || "Usuario"
-            }
-          })) || []
-
-          ,
+          comentarios:
+            data.comments?.map((c) => ({
+              id: c.id,
+              usuario: c.autor,
+              texto: c.comment_text,
+            })) || [],
         },
       });
     } catch (err) {
@@ -283,54 +278,53 @@ export const Reporte = () => {
     }
   };
 
-  const eliminarComentario = async (commentId) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar este comentario?")) return;
+const eliminarComentario = async (commentId) => {
+  if (!confirm("¿Estás seguro de que deseas eliminar este comentario?")) return;
 
-    try {
-      const token = await getToken();
-      if (!token) return;
+  try {
+    const token = await getToken();
+    if (!token) return;
 
-      const res = await fetch(`${BACKEND_URL}/api/comentarios/${commentId}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const res = await fetch(`${BACKEND_URL}/api/comentarios/${commentId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      if (!res.ok) {
-        const error = await res.json();
-        alert(error.msg || "Error al eliminar comentario.");
-        return;
-      }
-
-      alert("Comentario eliminado correctamente.");
-      await fetchReporte(); // Recargar comentarios
-    } catch (error) {
-      console.error("Error al eliminar comentario:", error);
-      alert("Hubo un error al eliminar el comentario.");
+    if (!res.ok) {
+      const error = await res.json();
+      alert(error.msg || "Error al eliminar comentario.");
+      return;
     }
-  };
+
+    alert("Comentario eliminado correctamente.");
+    await fetchReporte(); // Recargar comentarios
+  } catch (error) {
+    console.error("Error al eliminar comentario:", error);
+    alert("Hubo un error al eliminar el comentario.");
+  }
+};
 
 
   useEffect(() => {
+    // console.log(" id del reporte:", id);
     fetchReporte();
     fetchUserFavorites();
     fetchUserVotes();
-    fetchCurrentUserBackendId();
+    fetchCurrentUserBackendId(); // 👈 Agregado aquí
+    console.log(currentUserId)
+    console.log("Comentarios del store:", store.reporte.comentarios);
+
   }, [id]);
 
-  useEffect(() => {
-    console.log("🧑 ID usuario actual:", currentUserId);
-  }, [currentUserId]);
 
 
+    if (loading) {
+      return <div className="text-white text-center mt-5">Cargando reporte...</div>;
+    }
 
-
-  if (loading) {
-    return <div className="text-white text-center mt-5">Cargando reporte...</div>;
-  }
-
-
+  
 
   return (
     <div className="container py-4" style={{ maxWidth: 600 }}>
@@ -340,7 +334,7 @@ export const Reporte = () => {
             className="border rounded p-3 mb-3"
             style={{
               background: "rgba(255, 255, 255, 0.15)",
-              backdropFilter: "blur(50px)",
+              backdropFilter: "blur(10px)",
               color: "white",
               fontSize: "1.25rem",
               fontWeight: "400",
@@ -467,11 +461,10 @@ export const Reporte = () => {
                 color: votedPosts[id] === "upvote" ? "white" : "lightgray",
                 background: "rgba(255, 255, 255, 0.2)",
                 borderRadius: "50px",
-                backdropFilter: "blur(100px)",
-                border: votedPosts[id] === "upvote" ? "2px solid white" : "none", // <-- Añade esta línea
+                backdropFilter: "blur(10px)",
               }}
             >
-              ↑ Upvote {store.reporte.positiveVotes}
+              Upvote {store.reporte.positiveVotes}
             </button>
             <button
               onClick={() => handleVote(id, "downvote")}
@@ -481,13 +474,11 @@ export const Reporte = () => {
                 color: votedPosts[id] === "downvote" ? "white" : "lightgray",
                 background: "rgba(255, 255, 255, 0.2)",
                 borderRadius: "50px",
-                backdropFilter: "blur(100px)",
-                border: votedPosts[id] === "downvote" ? "2px solid white" : "none", // <-- Añade esta línea
+                backdropFilter: "blur(10px)",
               }}
             >
-              ↓ Downvote {store.reporte.negativeVotes}
+              Downvote {store.reporte.negativeVotes}
             </button>
-
             <button
               onClick={() => abrirModalDenuncia("reporte")}
               className="btn btn-sm"
@@ -522,7 +513,7 @@ export const Reporte = () => {
             className="border rounded p-3 mt-3"
             style={{
               background: "rgba(255, 255, 255, 0.15)",
-              backdropFilter: "blur(20px)",
+              backdropFilter: "blur(10px)",
               color: "white",
               fontSize: "1rem",
               fontWeight: "300",
@@ -536,7 +527,7 @@ export const Reporte = () => {
                 className="btn btn-sm"
                 style={{
                   background: "rgba(255,255,255,0.2)",
-                  backdropFilter: "blur(20px)",
+                  backdropFilter: "blur(6px)",
                   color: "white",
                   borderRadius: "50px",
                 }}
@@ -546,46 +537,50 @@ export const Reporte = () => {
               </button>
             </div>
 
-            {store.reporte.comentarios.map(({ id: commentId, usuario, texto }) => (
-              <div key={commentId} className="mb-3 d-flex justify-content-between align-items-start">
-                <div>
-                  <strong>{usuario.fullname}:</strong> <span>{texto}</span>
+            {store.reporte.comentarios.length > 0 ? (
+              store.reporte.comentarios.map(({ id: commentId, usuario, texto }) => (
+                <div key={commentId} className="mb-3 d-flex justify-content-between align-items-start">
+                  <div>
+                    <strong>{usuario}:</strong> <span>{texto}</span>
+                    
+                  </div>
+                  
+                  {Number(usuario?.id) === Number(currentUserId) ? (
+                    <button
+                      className="btn btn-sm px-2 py-1 ms-2"
+                      onClick={() => eliminarComentario(commentId)}
+                      style={{
+                        background: "rgba(255, 0, 0, 0.3)",
+                        color: "white",
+                        fontSize: "0.75rem",
+                        borderRadius: "0.5rem",
+                        backdropFilter: "blur(5px)",
+                      }}
+                      title="Eliminar mi comentario"
+                    >
+                      🗑️
+                    </button>
+                  ) : (
+                    <button
+                      className="btn btn-sm px-2 py-1 ms-2"
+                      onClick={() => abrirModalDenuncia("comentario", commentId)}
+                      style={{
+                        background: "rgba(255, 80, 80, 0.15)",
+                        color: "white",
+                        fontSize: "0.75rem",
+                        borderRadius: "0.5rem",
+                        backdropFilter: "blur(5px)",
+                      }}
+                      title={`Denunciar comentario de ${usuario.fullname || "usuario"}`}
+                    >
+                      🚩
+                    </button>
+                  )}
                 </div>
-
-                {Number(usuario.id) === Number(currentUserId) ? (
-                  <button
-                    className="btn btn-sm px-2 py-1 ms-2"
-                    onClick={() => eliminarComentario(commentId)}
-                    style={{
-                      background: "rgba(255, 0, 0, 0.3)",
-                      color: "white",
-                      fontSize: "0.75rem",
-                      borderRadius: "0.5rem",
-                      backdropFilter: "blur(5px)",
-                    }}
-                    title="Eliminar mi comentario"
-                  >
-                    🗑️
-                  </button>
-                ) : (
-                  <button
-                    className="btn btn-sm px-2 py-1 ms-2"
-                    onClick={() => abrirModalDenuncia("comentario", commentId)}
-                    style={{
-                      background: "rgba(255, 80, 80, 0.15)",
-                      color: "white",
-                      fontSize: "0.75rem",
-                      borderRadius: "0.5rem",
-                      backdropFilter: "blur(5px)",
-                    }}
-                    title="Denunciar comentario"
-                  >
-                    🚩
-                  </button>
-                )}
-              </div>
-            ))}
-
+              ))
+            ) : (
+              <p className="text-white-50">No hay comentarios todavía.</p>
+            )}
           </div>
         </div>
       </div>
