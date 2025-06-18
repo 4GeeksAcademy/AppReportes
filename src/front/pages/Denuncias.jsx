@@ -16,32 +16,30 @@ export const Denuncias = () => {
   };
 
   const fetchDenuncias = async () => {
-        try {
-          const token = await getToken();
-          if (!token) return;
+    try {
+      const token = await getToken();
+      if (!token) return;
 
-          const res = await fetch(`${BACKEND_URL}/api/denuncias`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+      const res = await fetch(`${BACKEND_URL}/api/denuncias`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-          if (!res.ok) throw new Error("Error al obtener denuncias");
+      if (!res.ok) throw new Error("Error al obtener denuncias");
 
-          const data = await res.json();
+      const data = await res.json();
 
-          const processedData = data.map((denuncia) => ({
-            ...denuncia,
-            tipo: denuncia.comment_id ? "comentario" : "reporte",
-          }));
+      const processedData = data.map((denuncia) => ({
+        ...denuncia,
+        tipo: denuncia.comment_id ? "comentario" : "reporte",
+      }));
 
-          setDenuncias(processedData);
-        } catch (error) {
-          console.error("Error al cargar denuncias:", error);
-        }
-      };
+      setDenuncias(processedData);
+    } catch (error) {
+      console.error("Error al cargar denuncias:", error);
+    }
+  };
 
   useEffect(() => {
-    
-
     fetchDenuncias();
   }, []);
 
@@ -52,7 +50,7 @@ export const Denuncias = () => {
       return;
     }
 
-    const { id, user_id, denunciado_fullname, motivo } = denuncia; // user_id tiene que estar en denuncia
+    const { id, user_id, denunciado_fullname, motivo } = denuncia;
 
     try {
       if (action === "ver") {
@@ -78,7 +76,7 @@ export const Denuncias = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            user_id: user_id,
+            user_id,
             fullname: denunciado_fullname,
             motivo: motivo || "Sanción administrativa",
             estado: "baneado",
@@ -86,7 +84,6 @@ export const Denuncias = () => {
         });
 
         if (res.status === 201) {
-          // Ban successful, now delete the denuncia
           setDenuncias((prev) => prev.filter((d) => d.id !== id));
           alert(`Usuario ${denunciado_fullname} baneado exitosamente`);
         } else {
@@ -100,7 +97,6 @@ export const Denuncias = () => {
     }
   };
 
-
   return (
     <div
       className="d-flex min-vh-100 justify-content-center align-items-start pt-4"
@@ -112,10 +108,12 @@ export const Denuncias = () => {
       }}
     >
       <main style={{ width: "95%", maxWidth: "1200px" }}>
+        {/* Contenedor título con blur */}
         <div
           style={{
             background: "rgba(255, 255, 255, 0.1)",
             backdropFilter: "blur(8px)",
+            WebkitBackdropFilter: "blur(8px)",
             borderRadius: "15px",
             boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
             padding: "1.5rem 1rem",
@@ -123,35 +121,49 @@ export const Denuncias = () => {
             textAlign: "center",
           }}
         >
-          <h1 style={{ fontWeight: "300", fontFamily: "'Segoe UI', Tahoma" }}>
+          <h1
+            style={{
+              fontWeight: "300",
+              fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+              margin: 0,
+            }}
+          >
             📋 Denuncias Pendientes
           </h1>
         </div>
 
+        {/* Tabla con blur y scroll */}
         <div
           style={{
             background: "rgba(255, 255, 255, 0.1)",
-            backdropFilter: "blur(8px)",
+            backdropFilter: "blur(15px)",
+            WebkitBackdropFilter: "blur(8px)",
             borderRadius: "15px",
             boxShadow: "0 8px 32px rgba(0,0,0,0.25)",
             padding: "1rem",
             overflowX: "auto",
+            WebkitOverflowScrolling: "touch",
           }}
         >
           <table
             className="table table-borderless text-white"
-            style={{ minWidth: "1000px", whiteSpace: "nowrap" }}
+            style={{
+              minWidth: "1000px",
+              backgroundColor: "transparent",
+              color: "inherit",
+              whiteSpace: "nowrap",
+            }}
           >
-            <thead>
-              <tr>
-                <th>Denunciante</th>
-                <th>Denunciado</th>
-                <th>Tipo</th>
-                <th>Reporte Título</th>
-                <th>Comentario Texto</th>
-                <th>Motivo</th>
-                <th>Fecha</th>
-                <th>Acciones</th>
+            <thead style={{ backgroundColor: "transparent" }}>
+              <tr style={{ backgroundColor: "transparent" }}>
+                <th style={{ backgroundColor: "transparent" }}>Denunciante</th>
+                <th style={{ backgroundColor: "transparent" }}>Denunciado</th>
+                <th style={{ backgroundColor: "transparent" }}>Tipo</th>
+                <th style={{ backgroundColor: "transparent" }}>Reporte Título</th>
+                <th style={{ backgroundColor: "transparent" }}>Comentario Texto</th>
+                <th style={{ backgroundColor: "transparent" }}>Motivo</th>
+                <th style={{ backgroundColor: "transparent" }}>Fecha</th>
+                <th style={{ backgroundColor: "transparent" }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -166,16 +178,25 @@ export const Denuncias = () => {
                   motivo,
                   created_at,
                 } = denuncia;
+
                 return (
-                  <tr key={id} style={{ borderBottom: "1px solid rgba(255,255,255,0.3)" }}>
-                    <td>{denunciante_fullname}</td>
-                    <td>{denunciado_fullname}</td>
-                    <td>{tipo}</td>
-                    <td>{reporte_titulo}</td>
-                    <td>{comment_text || "-"}</td>
-                    <td>{motivo}</td>
-                    <td>{new Date(created_at).toLocaleDateString()}</td>
-                    <td>
+                  <tr
+                    key={id}
+                    style={{
+                      backgroundColor: "transparent",
+                      borderBottom: "1px solid rgba(255,255,255,0.3)",
+                    }}
+                  >
+                    <td style={{ backgroundColor: "transparent" }}>{denunciante_fullname}</td>
+                    <td style={{ backgroundColor: "transparent" }}>{denunciado_fullname}</td>
+                    <td style={{ backgroundColor: "transparent" }}>{tipo}</td>
+                    <td style={{ backgroundColor: "transparent" }}>{reporte_titulo}</td>
+                    <td style={{ backgroundColor: "transparent" }}>{comment_text || "-"}</td>
+                    <td style={{ backgroundColor: "transparent" }}>{motivo}</td>
+                    <td style={{ backgroundColor: "transparent" }}>
+                      {new Date(created_at).toLocaleDateString()}
+                    </td>
+                    <td style={{ backgroundColor: "transparent" }}>
                       <button
                         className="btn btn-sm btn-outline-success me-2"
                         onClick={() => handleActionClick("ver", denuncia)}

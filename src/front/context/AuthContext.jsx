@@ -28,7 +28,8 @@ export const AuthProvider = ({ children }) => {
           });
 
           if (!authRes.ok) {
-            console.error("Error en /firebase-auth:", await authRes.text());
+            const errorText = await authRes.text();
+            console.error("Error en /firebase-auth:", authRes.status, errorText);
             setUserBackend(null);
             setLoading(false);
             return;

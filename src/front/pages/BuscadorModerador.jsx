@@ -318,7 +318,7 @@ export const BuscadorModerador = () => {
                     colSpan="3"
                     style={{
                       textAlign: "center",
-                      backdropFilter: "blur(8px)",
+                      backdropFilter: "blur(10px)",
                       WebkitBackdropFilter: "blur(8px)",
                       padding: "1rem",
                       backgroundColor: "rgba(255,255,255,0.1)",

@@ -111,7 +111,7 @@ export const GestionarModeradores = () => {
         <div
           style={{
             background: "rgba(255, 255, 255, 0.1)",
-            backdropFilter: "blur(8px)",
+            backdropFilter: "blur(15px)",
             WebkitBackdropFilter: "blur(8px)",
             borderRadius: "15px",
             boxShadow: "0 8px 32px rgba(0,0,0,0.25)",

@@ -178,9 +178,9 @@ export const Feed = () => {
                 alt={post.title}
                 className="w-100"
                 style={{
-                aspectRatio: "3/4",
-                objectFit: "cover",
-                borderRadius: "1rem",
+                  aspectRatio: "3/4",
+                  objectFit: "cover",
+                  borderRadius: "1rem",
                 }}
                 onClick={() => navigate(`/reporte/${post.id}`)}
                 role="button"
@@ -277,11 +277,12 @@ export const Feed = () => {
                     color: votedPosts[post.id]?.up ? "white" : "lightgray",
                     background: "rgba(255, 255, 255, 0.2)",
                     borderRadius: "50px",
-                    backdropFilter: "blur(3px)",
+                    backdropFilter: "blur(100px)",
                     minWidth: "fit-content",
+                    border: votedPosts[post.id]?.up ? "2px solid white" : "2px solid transparent",
                   }}
                 >
-                  Upvote {post.positiveVotes}
+                  ↑ Upvote {post.positiveVotes}
                 </button>
                 <button
                   onClick={() => handleVote(post.id, "downvote")}
@@ -291,11 +292,12 @@ export const Feed = () => {
                     color: votedPosts[post.id]?.down ? "white" : "lightgray",
                     background: "rgba(255, 255, 255, 0.2)",
                     borderRadius: "50px",
-                    backdropFilter: "blur(3px)",
+                    backdropFilter: "blur(100px)",
                     minWidth: "fit-content",
+                    border: votedPosts[post.id]?.down ? "1.5px solid white" : "1.5px solid transparent",
                   }}
                 >
-                  Downvote {post.negativeVotes}
+                  ↓ Downvote {post.negativeVotes}
                 </button>
               </div>
             </div>

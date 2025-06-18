@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams, useNavigate  } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import corazonVacio from "../assets/img/corazon_vacio.png";
 import corazonVacioNegro from "../assets/img/corazon_vacio_negro.png";
 import useGlobalReducer from "../hooks/useGlobalReducer";
@@ -17,7 +17,7 @@ export const Reporte = () => {
   const [liked, setLiked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [votedPosts, setVotedPosts] = useState({});
-  
+
   const [reportModalVisible, setReportModalVisible] = useState(false);
   const [reportModalTipo, setReportModalTipo] = useState("reporte"); // "reporte" o "comentario"
   const [reportModalComentarioId, setReportModalComentarioId] = useState(null);
@@ -67,13 +67,13 @@ export const Reporte = () => {
           positiveVotes: data.votes?.filter((v) => v.is_upvote).length || 0,
           negativeVotes: data.votes?.filter((v) => !v.is_upvote).length || 0,
           comentarios: data.comments?.map((c) => ({
-          id: c.id,
-          texto: c.comment_text,
-          usuario: {
-            id: c.usuario?.id,
-            fullname: c.usuario?.fullname || "Usuario"
-          }
-        })) || []
+            id: c.id,
+            texto: c.comment_text,
+            usuario: {
+              id: c.usuario?.id,
+              fullname: c.usuario?.fullname || "Usuario"
+            }
+          })) || []
 
           ,
         },
@@ -283,40 +283,40 @@ export const Reporte = () => {
     }
   };
 
-const eliminarComentario = async (commentId) => {
-  if (!confirm("¿Estás seguro de que deseas eliminar este comentario?")) return;
+  const eliminarComentario = async (commentId) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este comentario?")) return;
 
-  try {
-    const token = await getToken();
-    if (!token) return;
+    try {
+      const token = await getToken();
+      if (!token) return;
 
-    const res = await fetch(`${BACKEND_URL}/api/comentarios/${commentId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      const res = await fetch(`${BACKEND_URL}/api/comentarios/${commentId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    if (!res.ok) {
-      const error = await res.json();
-      alert(error.msg || "Error al eliminar comentario.");
-      return;
+      if (!res.ok) {
+        const error = await res.json();
+        alert(error.msg || "Error al eliminar comentario.");
+        return;
+      }
+
+      alert("Comentario eliminado correctamente.");
+      await fetchReporte(); // Recargar comentarios
+    } catch (error) {
+      console.error("Error al eliminar comentario:", error);
+      alert("Hubo un error al eliminar el comentario.");
     }
-
-    alert("Comentario eliminado correctamente.");
-    await fetchReporte(); // Recargar comentarios
-  } catch (error) {
-    console.error("Error al eliminar comentario:", error);
-    alert("Hubo un error al eliminar el comentario.");
-  }
-};
+  };
 
 
   useEffect(() => {
     fetchReporte();
     fetchUserFavorites();
     fetchUserVotes();
-    fetchCurrentUserBackendId(); 
+    fetchCurrentUserBackendId();
   }, [id]);
 
   useEffect(() => {
@@ -326,11 +326,11 @@ const eliminarComentario = async (commentId) => {
 
 
 
-    if (loading) {
-      return <div className="text-white text-center mt-5">Cargando reporte...</div>;
-    }
+  if (loading) {
+    return <div className="text-white text-center mt-5">Cargando reporte...</div>;
+  }
 
-  
+
 
   return (
     <div className="container py-4" style={{ maxWidth: 600 }}>
@@ -340,7 +340,7 @@ const eliminarComentario = async (commentId) => {
             className="border rounded p-3 mb-3"
             style={{
               background: "rgba(255, 255, 255, 0.15)",
-              backdropFilter: "blur(10px)",
+              backdropFilter: "blur(50px)",
               color: "white",
               fontSize: "1.25rem",
               fontWeight: "400",
@@ -467,10 +467,11 @@ const eliminarComentario = async (commentId) => {
                 color: votedPosts[id] === "upvote" ? "white" : "lightgray",
                 background: "rgba(255, 255, 255, 0.2)",
                 borderRadius: "50px",
-                backdropFilter: "blur(10px)",
+                backdropFilter: "blur(100px)",
+                border: votedPosts[id] === "upvote" ? "2px solid white" : "none", // <-- Añade esta línea
               }}
             >
-              Upvote {store.reporte.positiveVotes}
+              ↑ Upvote {store.reporte.positiveVotes}
             </button>
             <button
               onClick={() => handleVote(id, "downvote")}
@@ -480,11 +481,13 @@ const eliminarComentario = async (commentId) => {
                 color: votedPosts[id] === "downvote" ? "white" : "lightgray",
                 background: "rgba(255, 255, 255, 0.2)",
                 borderRadius: "50px",
-                backdropFilter: "blur(10px)",
+                backdropFilter: "blur(100px)",
+                border: votedPosts[id] === "downvote" ? "2px solid white" : "none", // <-- Añade esta línea
               }}
             >
-              Downvote {store.reporte.negativeVotes}
+              ↓ Downvote {store.reporte.negativeVotes}
             </button>
+
             <button
               onClick={() => abrirModalDenuncia("reporte")}
               className="btn btn-sm"
@@ -519,7 +522,7 @@ const eliminarComentario = async (commentId) => {
             className="border rounded p-3 mt-3"
             style={{
               background: "rgba(255, 255, 255, 0.15)",
-              backdropFilter: "blur(10px)",
+              backdropFilter: "blur(20px)",
               color: "white",
               fontSize: "1rem",
               fontWeight: "300",
@@ -533,7 +536,7 @@ const eliminarComentario = async (commentId) => {
                 className="btn btn-sm"
                 style={{
                   background: "rgba(255,255,255,0.2)",
-                  backdropFilter: "blur(6px)",
+                  backdropFilter: "blur(20px)",
                   color: "white",
                   borderRadius: "50px",
                 }}

@@ -46,7 +46,8 @@ export const Navbar = () => {
 
             if (!res.ok) {
               const text = await res.text();
-              throw new Error(`Error al cargar userinfo: ${res.status} - ${text}`);
+              console.error("Error al cargar /userinfo:", res.status, text);
+              return;
             }
 
             const data = await res.json();
