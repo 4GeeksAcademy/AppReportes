@@ -35,7 +35,8 @@ app.url_map.strict_slashes = False
 
 CORS(app, supports_credentials=True, origins=[
     "https://super-waddle-r4gq474w5w9wfj9j-3000.app.github.dev/",
-    "http://localhost:3000"
+    "http://localhost:3000",
+    "https://appreportes-1.onrender.com"
 ])
 ##### JWT Configuration
 
