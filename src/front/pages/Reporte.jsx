@@ -50,7 +50,7 @@ export const Reporte = () => {
       const res = await fetch(`${BACKEND_URL}/api/reportes/${id}`);
       if (!res.ok) throw new Error("No se pudo cargar el reporte");
       const data = await res.json();
-      console.log(data.comments)
+
 
       dispatch({
         type: "SET_REPORTE",
@@ -177,12 +177,6 @@ export const Reporte = () => {
 
   const enviarDenuncia = async (motivo) => {
 
-    console.log("Enviando denuncia a:", `${BACKEND_URL}/api/denuncia`);
-    console.log("Body:", {
-      motivo,
-      tipo: reportModalTipo,
-      id_objetivo: reportModalTipo === "reporte" ? id : reportModalComentarioId,
-    });
     try {
       const token = await getToken();
       if (!token) return;
@@ -318,11 +312,6 @@ export const Reporte = () => {
     fetchUserVotes();
     fetchCurrentUserBackendId();
   }, [id]);
-
-  useEffect(() => {
-    console.log("🧑 ID usuario actual:", currentUserId);
-  }, [currentUserId]);
-
 
 
 

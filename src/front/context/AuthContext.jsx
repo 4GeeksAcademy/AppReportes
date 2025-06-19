@@ -44,7 +44,6 @@ export const AuthProvider = ({ children }) => {
           });
 
           const text = await infoRes.text();
-          console.log("Respuesta raw de /userinfo:", text);
 
           try {
             const data = JSON.parse(text);

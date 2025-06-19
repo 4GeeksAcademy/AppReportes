@@ -22,7 +22,7 @@ export const FirebaseLogin = () => {
       const user = userCredential.user;
 
       const idToken = await user.getIdToken(); // ← Token de Firebase
-      console.log("🔥 Firebase ID Token:", idToken); // ← MOSTRAR EN CONSOLA
+
 
       const res = await authWithFirebase(idToken);
       alert("✅ Login exitoso");
@@ -40,7 +40,6 @@ export const FirebaseLogin = () => {
       const user = result.user;
 
       const idToken = await user.getIdToken();
-      console.log("🔥 Firebase ID Token (Google):", idToken); // ← MOSTRAR EN CONSOLA
 
       const res = await authWithFirebase(idToken);
       alert("✅ Login con Google exitoso");

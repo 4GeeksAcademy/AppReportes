@@ -78,7 +78,7 @@ export const authWithFirebase = async (idToken) => {
             }
         });
 
-        console.log("Respuesta backend /firebase-auth status:", res.status);
+
 
         if (!res.ok) {
             const err = await res.json();
@@ -87,7 +87,6 @@ export const authWithFirebase = async (idToken) => {
         }
 
         const data = await res.json();
-        console.log("Respuesta JSON backend /firebase-auth:", data);
 
         return data;
     } catch (error) {
